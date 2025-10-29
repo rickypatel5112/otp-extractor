@@ -11,11 +11,12 @@ import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final RedisTokenService redisTokenService;
-//    private final UserDetailsService userDetailsService;
+    private final RedisPIDService redisPIDService;
 
     public record TokenPair(String accessToken, String refreshToken) {
     }
@@ -45,6 +46,7 @@ public class AuthenticationService {
                 .build();
 
         userRepository.save(user);
+        redisPIDService.addPasswordId(request.getEmail());
     }
 
     public TokenPair authenticate(AuthenticationRequest request) {
@@ -57,32 +59,38 @@ public class AuthenticationService {
 
         /**
          We don't need this, we can be sure that the user would exist for that token.
-         The user when they delete their account, we'll revoke all their access and refresh tokens. This way
+         TODO: The user when they delete their account, we'll revoke all their access and refresh tokens. This way
          it won't pass the revocation check
          */
 //        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
 
         String subject = request.getEmail();
-        var accessToken = jwtService.generateToken(subject, TokenType.ACCESS);
-        var refreshToken = jwtService.generateToken(subject, TokenType.REFRESH);
 
-        redisTokenService.storeToken(refreshToken, TokenType.REFRESH);
+        var accessToken = jwtService.generateToken(pwdIdClaimMap(subject), subject, TokenType.ACCESS);
+        var refreshToken = jwtService.generateToken(pwdIdClaimMap(subject), subject, TokenType.REFRESH);
+
+        redisTokenService.addRefreshToken(refreshToken);
         return new TokenPair(accessToken, refreshToken);
+    }
+
+    private Map<String, Object> pwdIdClaimMap(String subject) {
+        String pwdId = redisPIDService.getPasswordId(subject);
+        Map<String, Object> map = new HashMap<>();
+        map.put("pid", pwdId);
+        return map;
     }
 
     public TokenPair issueNewNonExpiredToken(String refreshToken) {
 
         // Check if refresh token is expired
         if (!jwtService.isTokenValid(refreshToken)) {
-            throw new JwtException("Refresh token has expired");
+            throw new JwtException("Invalid refresh token");
         }
 
-        // Extract username and JTI
-        String jti = jwtService.extractJti(refreshToken);
         String subject =  jwtService.extractSubject(refreshToken);
 
         // Generate new access token
-        String newAccessToken = jwtService.generateToken(subject, TokenType.ACCESS);
+        String newAccessToken = jwtService.generateToken(pwdIdClaimMap(subject), subject, TokenType.ACCESS);
 
         // Determine if refresh token should be rotated
         Date expirationDate = jwtService.extractClaim(refreshToken, Claims::getExpiration);
@@ -91,7 +99,7 @@ public class AuthenticationService {
 
         if (expirationDate.before(threshold)) {
             // Less than 15 minutes remaining → issue a new refresh token
-            refreshToken = jwtService.generateToken(subject, TokenType.REFRESH);
+            refreshToken = jwtService.generateToken(pwdIdClaimMap(subject), subject, TokenType.REFRESH);
         }
 
         return new TokenPair(newAccessToken, refreshToken);
@@ -105,7 +113,7 @@ public class AuthenticationService {
         }
 
         //TODO: Check if accessToken and refreshToken are not null & are valid
-        redisTokenService.storeToken(accessToken, TokenType.ACCESS);
+        redisTokenService.addAccessToken(accessToken);
         jwtService.revokeToken(accessToken);
         jwtService.revokeToken(refreshToken);
     }

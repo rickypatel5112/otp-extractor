@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -29,15 +28,18 @@ import static com.project.otp_extractor.services.RedisTokenService.TOKEN_PREFIX;
 @RequiredArgsConstructor
 public class JwtService {
 
-
-
     private final RedisTemplate<String, JwtTokenMetadata> redisTemplate;
+    private final RedisPIDService redisPIDService;
 
     @Value("${jwt.secret-key}")
     private String SECRET_KEY;
 
     public String extractSubject(String jwt) {
         return extractClaim(jwt, Claims::getSubject);
+    }
+
+    private String extractPID(String jwt) {
+        return extractClaim(jwt, claims -> claims.get("pid").toString());
     }
 
     private Date extractExpiration(String jwt) {
@@ -90,10 +92,6 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateToken(String subject,  TokenType tokenType) {
-        return generateToken(new HashMap<>(), subject, tokenType);
-    }
-
     public void revokeToken(String token) {
         String jti = extractJti(token);
         String key = TOKEN_PREFIX + jti;
@@ -107,13 +105,18 @@ public class JwtService {
         }
     }
 
+    public boolean isAccessToken(String token) {
+        return extractType(token) == TokenType.ACCESS;
+    }
+
     public boolean isTokenValid(String token) {
         try {
-            if (isTokenExpired(token)) {
+            String storedPID = redisPIDService.getPasswordId(extractSubject(token));
+
+            if (isTokenExpired(token) || !storedPID.equals(extractPID(token))) {
                 return false;
             };
 
-//            String type = extractClaim(token, claims -> claims.get("type", String.class));
             String type = extractType(token).toString();
             final String jti = extractJti(token);
             JwtTokenMetadata metadata = redisTemplate.opsForValue().get(TOKEN_PREFIX + jti);

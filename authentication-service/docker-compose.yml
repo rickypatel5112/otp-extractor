@@ -1,0 +1,39 @@
+services:
+  authentication:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - redis
+    profiles: ["authentication", "all"]
+
+  redis:
+    container_name: otp-redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles: ["authentication", "all"]
+
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    container_name: otp-postgres-db
+    environment:
+      POSTGRES_DB: otp-extractor
+      POSTGRES_USER: ricky
+      POSTGRES_PASSWORD: ricky
+    profiles: ["authentication", "all"]
+
+#  rabbitmq:
+#    image: rabbitmq:4.2.0-management-alpine
+#    container_name: rabbitmq
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"

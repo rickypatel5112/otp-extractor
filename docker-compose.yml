@@ -1,0 +1,72 @@
+services:
+  authentication:
+    container_name: authentication-service
+    build:
+      context: ./authentication-service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    profiles: [ "authentication", "all" ]
+
+  notification:
+    container_name: notification-service
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    profiles: [ "notification", "all" ]
+
+  redis:
+    container_name: authentication-redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles: [ "authentication", "all" ]
+
+  db:
+    container_name: authentication-postgres-db
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: otp-extractor
+      POSTGRES_USER: ricky
+      POSTGRES_PASSWORD: ricky
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ricky -d otp-extractor" ]
+      interval: 10s        # how often to run the check
+      timeout: 5s          # how long to wait for a response
+      retries: 5           # how many times before marking unhealthy
+      start_period: 10s
+    profiles: [ "authentication", "all" ]
+
+
+  rabbitmq:
+    container_name: email-notification-rabbitmq
+    image: rabbitmq:4.2.0-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    profiles: ["authentication", "notification", "all"]

@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: otp-authentication-service
+
+  datasource:
+    url: jdbc:postgresql://db:5432/otp-extractor
+    username: "YOUR_USERNAME"
+    password: "YOUR_PASSWORD"
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+  cache:
+    type: redis
+
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
+
+front-end:
+  urls:
+    - "http://localhost:3000"
+    - "http://my-frontend.com"
+    - "http://another-frontend.com"
+
+jwt:
+  secret-key: "YOUR_SECRET_KEY"

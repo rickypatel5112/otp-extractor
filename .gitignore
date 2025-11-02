@@ -1,45 +1,11 @@
-#############################
-# Build and Output
-#############################
+HELP.md
 target/
-*/target/
-!**/src/main/**/target/
-!**/src/test/**/target/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-generated-sources/
-generated-test-sources/
-maven-status/
-maven-archiver/
-surefire-reports/
-
-#############################
-# Maven Wrapper
-#############################
 .mvn/wrapper/maven-wrapper.jar
 .mvn/timing.properties
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-#############################
-# Kotlin
-#############################
-.kotlin
-
-#############################
-# IntelliJ IDEA
-#############################
-.idea/
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
-*.iml
-*.ipr
-
-#############################
-# Eclipse
-#############################
+### STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -48,49 +14,28 @@ surefire-reports/
 .springBeans
 .sts4-cache
 
-#############################
-# NetBeans
-#############################
+### IntelliJ IDEA ###
+.idea
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-#############################
-# Visual Studio Code
-#############################
+### VS Code ###
 .vscode/
-
-#############################
-# Operating System Files
-#############################
-.DS_Store
-Thumbs.db
-desktop.ini
-
-#############################
-# Database & Runtime
-#############################
-pgdata/
-
-#############################
-# Logs
-#############################
-*.log
-
-#############################
-# Environment & Config Files
-#############################
-.env
-env.json
-
-#############################
-# Miscellaneous
-#############################
-logs/
-tmp/
-
 
 **/.idea
 **/pgdata

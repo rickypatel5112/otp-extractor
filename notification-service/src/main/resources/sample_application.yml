@@ -19,3 +19,5 @@ spring:
           auth: true
           starttls:
             enable: true
+reset-password:
+  queue: "reset-password-queue"

@@ -40,5 +40,8 @@ front-end:
     - "http://my-frontend.com"
     - "http://another-frontend.com"
 
+reset-password:
+  queue: "reset-password-queue"
+
 jwt:
   secret-key: "YOUR_SECRET_KEY"

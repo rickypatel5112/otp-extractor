@@ -113,7 +113,7 @@ public class AuthenticationService {
         jwtService.revokeToken(refreshToken);
     }
 
-    public void requestPasswordReset(@RequestBody ResetPasswordRequest request){
+    public void forgotPassword(@RequestBody ForgotPasswordRequest request){
 
         String email = request.getEmail();
         String frontEndUrl = request.getFrontEndUrl();
@@ -123,21 +123,64 @@ public class AuthenticationService {
 
             if(!frontendConfig.isUrlAllowed(frontEndUrl)) return;
 
-            var resetRequestResponse = ResetRequestResponse
+            var forgotPasswordResponse = ForgotPasswordResponse
                                             .builder()
                                             .resetToken(resetToken)
                                             .email(email)
                                             .frontEndUrl(frontEndUrl)
                                             .build();
 
-            passwordResetProducer.sendMessage(resetRequestResponse);
+            passwordResetProducer.sendMessage(forgotPasswordResponse);
         }
+    }
+
+    @Transactional
+    public boolean resetPassword(String token, ResetPasswordRequest resetPasswordRequest) throws Exception {
+
+        if(!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD)) {
+            throw new JwtException("Invalid token");
+        }
+
+        String password = resetPasswordRequest.password();
+
+        if(password == null || password.isEmpty()) {
+            throw new Exception("Password is null or empty");
+        }
+
+        String userEmail = jwtService.extractSubject(token);
+
+        boolean isSuccess = userRepository.findByEmail(userEmail)
+                .map(user -> {
+                    user.setPassword(passwordEncoder.encode(password));
+                    userRepository.save(user);
+                    return true;
+                })
+                .orElse(false);
+
+        if (isSuccess) {
+            try {
+                redisPIDService.addPasswordId(userEmail);
+            } catch (Exception e) {
+                // rollback DB change manually if Redis fails
+                throw new RuntimeException("Redis operation failed, rolling back", e);
+            }
+        }
+
+        return isSuccess;
     }
 
     @Transactional
     public long deleteAccount(String email) {
         long deletedCount = userRepository.deleteByEmail(email);
-        redisPIDService.removePasswordId(email);
+
+        if (deletedCount > 0) {
+            try {
+                redisPIDService.removePasswordId(email);
+            } catch (Exception e) {
+                // Redis failed - rollback DB transaction
+                throw new RuntimeException("Failed to remove password ID from Redis, rolling back DB delete", e);
+            }
+        }
 
         return deletedCount;
     }

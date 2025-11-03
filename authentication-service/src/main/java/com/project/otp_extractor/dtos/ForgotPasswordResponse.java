@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class ResetRequestResponse {
+public class ForgotPasswordResponse {
     private String email;
     private String resetToken;
     private String frontEndUrl;

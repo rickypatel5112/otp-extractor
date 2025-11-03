@@ -1,10 +1,9 @@
 package com.project.otp_extractor.dtos;
 
-import lombok.Data;
+import com.project.otp_extractor.annotation.ValidPassword;
 
-@Data
-public class ResetPasswordRequest {
+public record ResetPasswordRequest(
 
-    private String email;
-    private String frontEndUrl;
+        @ValidPassword
+        String password) {
 }

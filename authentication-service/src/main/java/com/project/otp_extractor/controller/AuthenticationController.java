@@ -1,19 +1,20 @@
 package com.project.otp_extractor.controller;
 
-import com.project.otp_extractor.dtos.AuthenticationRequest;
-import com.project.otp_extractor.dtos.AuthenticationResponse;
-import com.project.otp_extractor.dtos.RegisterRequest;
-import com.project.otp_extractor.dtos.ResetPasswordRequest;
+import com.project.otp_extractor.dtos.*;
 import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
 import com.project.otp_extractor.services.AuthenticationService;
+import com.project.otp_extractor.services.JwtService;
 import com.project.otp_extractor.user.UserRepository;
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.AmqpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -23,6 +24,7 @@ public class AuthenticationController {
     private static final String cookiePath = "/api/v1/auth";
     private final AuthenticationService authenticationService;
     private final UserRepository userRepository;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) throws UserAlreadyExistsException {
@@ -85,8 +87,40 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot-password")
-    public void requestPasswordReset(@RequestBody ResetPasswordRequest request) {
-        authenticationService.requestPasswordReset(request);
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            authenticationService.forgotPassword(request);
+            // Always return 200 OK, even if email not found (to prevent user enumeration)
+            return ResponseEntity.ok().body("If a user with that email exists, you will receive an email with a password reset link");
+        } catch (AmqpException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Internal messaging error. Please try again later.",
+                    e
+            );
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestParam(name = "token") String token, @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) throws Exception {
+        try {
+//            String token = jwtService.generateToken("ricky.patel.sde@gmail.com", TokenType.RESET_PASSWORD);
+            boolean isSuccess = authenticationService.resetPassword(token, resetPasswordRequest);
+
+            if (isSuccess) {
+                return ResponseEntity.ok("Password reset successful");
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Password reset failed. Please try again.");
+            }
+        } catch (JwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid or expired token");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An unexpected error occurred: " + e.getMessage());
+        }
+
     }
 
     @PostMapping("/delete-account")

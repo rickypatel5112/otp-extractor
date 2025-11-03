@@ -2,12 +2,15 @@ package com.project.otp_extractor.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @ControllerAdvice
@@ -24,10 +27,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+        // Use a Map of field -> List of messages
+        Map<String, List<String>> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errors.put(error.getField(), error.getDefaultMessage());
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = (error instanceof FieldError fieldError)
+                    ? fieldError.getField()
+                    : error.getObjectName();
+
+            errors.computeIfAbsent(fieldName, key -> new ArrayList<>())
+                    .add(error.getDefaultMessage());
         });
 
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation Error", errors);
@@ -35,8 +44,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleUserAlreadyExists(UserAlreadyExistsException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
         return buildResponse(HttpStatus.CONFLICT, "User Already Exists", ex.getMessage());
     }
 

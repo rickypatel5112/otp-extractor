@@ -1,8 +1,8 @@
 package com.otp_extractor.notification_service.services;
 
+import com.otp_extractor.notification_service.dtos.ResetRequestResponse;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
-import org.extractor.notification.dtos.ResetRequestResponse;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 

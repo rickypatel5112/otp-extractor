@@ -12,6 +12,6 @@ public class PasswordResetProducer {
     private final RabbitTemplate rabbitTemplate;
 
     public void sendMessage(ResetRequestResponse resetRequestResponse){
-        rabbitTemplate.convertAndSend("password-reset-request", resetRequestResponse);
+        rabbitTemplate.convertAndSend("password-reset-queue", resetRequestResponse);
     }
 }

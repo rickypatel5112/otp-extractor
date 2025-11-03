@@ -28,7 +28,7 @@ public class SecurityConfig {
                         .requestMatchers(AUTH_BASE + "/register",
                                 AUTH_BASE + "/authenticate",
                                 AUTH_BASE + "/refresh",
-                                AUTH_BASE + "/reset-password",
+                                AUTH_BASE + "/forgot-password",
                                 "/try")
                         .permitAll()
                         .anyRequest()

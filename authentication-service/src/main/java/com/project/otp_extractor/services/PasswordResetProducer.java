@@ -2,6 +2,7 @@ package com.project.otp_extractor.services;
 
 import com.project.otp_extractor.dtos.ResetRequestResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -10,8 +11,9 @@ import org.springframework.stereotype.Service;
 public class PasswordResetProducer {
 
     private final RabbitTemplate rabbitTemplate;
+    private final Queue passwordResetQueue;
 
     public void sendMessage(ResetRequestResponse resetRequestResponse){
-        rabbitTemplate.convertAndSend("password-reset-queue", resetRequestResponse);
+        rabbitTemplate.convertAndSend(passwordResetQueue.getName(), resetRequestResponse);
     }
 }

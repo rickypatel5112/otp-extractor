@@ -12,7 +12,7 @@ public class PasswordResetConsumer {
 
     private final EmailSenderService emailSenderService;
 
-    @RabbitListener(queues = "password-reset-queue")
+    @RabbitListener(queues = "${reset-password.queue}")
     public void sendEmail(ResetRequestResponse resetRequestResponse) throws MessagingException {
         final String to = resetRequestResponse.getEmail();
         final String token = resetRequestResponse.getResetToken();

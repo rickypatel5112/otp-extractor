@@ -5,4 +5,10 @@ services:
       - "8081:8081"
     depends_on:
       - rabbitmq
-    profiles: ["notification", "all"]
+
+  rabbitmq:
+    image: rabbitmq:4.2.0-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"

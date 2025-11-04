@@ -2,13 +2,21 @@ services:
   notification:
     build: .
     ports:
-      - "8081:8081"
+      - "${NOTIFICATION_SERVICE_PORT}:8081"
     depends_on:
-      - rabbitmq
+      - auth-notification-rabbitmq
+    env_file:
+      - .env
 
-  rabbitmq:
+  auth-notification-rabbitmq:
     image: rabbitmq:4.2.0-management-alpine
     container_name: rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${NOTIFICATION_RABBITMQ_PORT}:5672"
+      - "${NOTIFICATION_RABBITMQ_MANAGEMENT_PORT}:15672"

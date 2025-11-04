@@ -8,12 +8,14 @@ services:
     ports:
       - "${AUTH_SERVICE_PORT}:8080"
     depends_on:
-      redis:
+      auth-redis:
         condition: service_healthy
-      db:
+      auth-db:
         condition: service_healthy
-      rabbitmq:
+      auth-notification-rabbitmq:
         condition: service_healthy
+    env_file:
+      - authentication-service/.env
     profiles: [ "authentication", "all" ]
 
   notification:
@@ -22,17 +24,19 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile
     ports:
-      - "${NOTIF_SERVICE_PORT}:8081"
+      - "${NOTIFICATION_SERVICE_PORT}:8081"
     depends_on:
-      rabbitmq:
+      auth-notification-rabbitmq:
         condition: service_healthy
+    env_file:
+      - notification-service/.env
     profiles: [ "notification", "all" ]
 
-  redis:
-    container_name: authentication-redis
-    image: redis:latest
+  auth-redis:
+    container_name: auth-redis
+    image: redis:alpine
     ports:
-      - "${REDIS_PORT}:6379"
+      - "${AUTH_REDIS_PORT}:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -40,32 +44,32 @@ services:
       retries: 5
     profiles: [ "authentication", "all" ]
 
-  db:
-    container_name: authentication-postgres-db
-    image: postgres:latest
+  auth-db:
+    container_name: auth-db
+    image: postgres:alpine
     ports:
-      - "${DB_PORT}:5432"
+      - "${AUTH_POSTGRES_PORT}:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     profiles: [ "authentication", "all" ]
 
-  rabbitmq:
-    container_name: email-notification-rabbitmq
+  auth-notification-rabbitmq:
+    container_name: auth-notification-rabbitmq
     image: rabbitmq:4.2.0-management-alpine
     ports:
-      - "${RABBITMQ_AMQP_PORT}:5672"
-      - "${RABBITMQ_MGMT_PORT}:15672"
+      - "${NOTIFICATION_RABBITMQ_PORT}:5672"
+      - "${NOTIFICATION_RABBITMQ_MANAGEMENT_PORT}:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      NOTIFICATION_RABBITMQ_USERNAME: ${NOTIFICATION_RABBITMQ_USERNAME}
+      NOTIFICATION_RABBITMQ_PASSWORD: ${NOTIFICATION_RABBITMQ_PASSWORD}
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s

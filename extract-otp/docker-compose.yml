@@ -1,4 +1,15 @@
 services:
+  extract-otp:
+    build: .
+    ports:
+      - "${EXTRACT_OTP_SERVICE_PORT}:8081"
+    depends_on:
+      - token-db
+      - token-redis
+      - rabbitmq
+    env_file:
+      - .env
+
   setup-gcp:
     build:
       context: ./setup
@@ -14,7 +25,7 @@ services:
     image: redis:alpine
     container_name: access-token-redis
     ports:
-      - "6379:6379"
+      - "${EXTRACT_OTP_REDIS_PORT}:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -25,7 +36,7 @@ services:
     image: postgres:alpine
     container_name: token-db
     ports:
-      - "5432:5432"
+      - "${EXTRACT_OTP_DB_PORT}:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${TOKEN_DB_USERNAME} -d ${TOKEN_DB_NAME}" ]
       interval: 10s
@@ -47,3 +58,16 @@ services:
       - "${PGADMIN_PORT}:80"
     depends_on:
       - token-db
+
+  rabbitmq:
+    image: rabbitmq:4.2.0-management-alpine
+    container_name: rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "${EXTRACT_OTP_RABBITMQ_PORT}:5672"
+      - "${EXTRACT_OTP_RABBITMQ_MANAGEMENT_PORT}:15672"

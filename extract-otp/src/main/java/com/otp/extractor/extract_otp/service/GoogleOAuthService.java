@@ -24,6 +24,7 @@ public class GoogleOAuthService {
     private final GmailWatchService gmailWatchService;
     private final UserService userService;
     private final GoogleAccessTokenCacheService googleAccessTokenCacheService;
+    private final GmailRequestProducer gmailRequestProducer;
 
     @Value("${google.client.id}")
     private String clientId;
@@ -52,8 +53,13 @@ public class GoogleOAuthService {
                 TimeUnit.SECONDS
         );
 
-        var watchResponse = gmailWatchService.createWatchForUser(userInfo.getEmail());
-        return ResponseEntity.ok(watchResponse);
+        //Publish the message to rabbitmq
+        gmailRequestProducer.requestWatchSetup(userInfo.getEmail());
+
+//        var watchResponse = gmailWatchService.createWatchForUser(userInfo.getEmail());
+//        return ResponseEntity.ok(watchResponse);
+
+        return ResponseEntity.ok("Watch.....");
     }
 
     private GoogleTokenResponse exchangeAuthCodeForTokens(String code) throws IOException {
@@ -81,3 +87,12 @@ public class GoogleOAuthService {
         return idToken;
     }
 }
+
+//Watch idea
+//lets say we keep track of global count and per user count per minute in redis or
+// something that has very fast read and writes and is time sensitive upto milliseconds.
+// and in our message broker we get a message our consumer consumes it and
+// checks if global count has exceeded or per user exceeded if any then should
+// we retry the request with exponential backoff? or put it in a retry queue of
+// lets say 15 seconds and if that fails put it in 30 secs retry queue if not then dead queue.
+// hows that sound so far?

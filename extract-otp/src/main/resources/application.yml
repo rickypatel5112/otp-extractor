@@ -6,24 +6,33 @@ spring:
 
   data:
     redis:
-      port: ${TOKEN_REDIS_PORT}
-      host: ${TOKEN_REDIS_HOST}
+      port: ${EXTRACT_OTP_REDIS_PORT}
+      host: ${EXTRACT_OTP_REDIS_HOST}
 
   datasource:
-    url: jdbc:postgresql://${TOKEN_DB_HOST}:${TOKEN_DB_PORT}/${TOKEN_DB_NAME}
-    username: ${TOKEN_DB_USERNAME}
-    password: ${TOKEN_DB_PASSWORD}
+    url: jdbc:postgresql://${EXTRACT_OTP_DB_HOST}:${EXTRACT_OTP_DB_PORT}/${EXTRACT_OTP_DB}
+    username: ${EXTRACT_OTP_DB_USERNAME}
+    password: ${EXTRACT_OTP_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+#    show-sql: true
     properties:
       hibernate:
         format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  rabbitmq:
+    host: ${EXTRACT_OTP_RABBITMQ_HOST}
+    port: ${EXTRACT_OTP_RABBITMQ_PORT}
+    username: ${EXTRACT_OTP_RABBITMQ_USERNAME}
+    password: ${EXTRACT_OTP_RABBITMQ_PASSWORD}
+
+server:
+  port: ${EXTRACT_OTP_SERVICE_PORT}
 
 google:
   client:
@@ -37,3 +46,7 @@ jasypt:
     algorithm: PBEWITHHMACSHA512ANDAES_256
     iv-generator-classname: org.jasypt.iv.RandomIvGenerator
     pool-size: 2
+
+rabbitmq:
+  gmail:
+    queue: gmail-queue

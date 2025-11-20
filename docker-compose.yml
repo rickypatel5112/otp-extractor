@@ -8,11 +8,11 @@ services:
     ports:
       - "${AUTH_SERVICE_PORT}:8080"
     depends_on:
-      auth-redis:
+      redis:
         condition: service_healthy
       auth-db:
         condition: service_healthy
-      auth-notification-rabbitmq:
+      rabbitmq:
         condition: service_healthy
     env_file:
       - authentication-service/.env
@@ -24,16 +24,34 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile
     ports:
-      - "${NOTIFICATION_SERVICE_PORT}:8081"
+      - "${NOTIFICATION_SERVICE_PORT}:8082"
     depends_on:
-      auth-notification-rabbitmq:
+      rabbitmq:
         condition: service_healthy
     env_file:
       - notification-service/.env
     profiles: [ "notification", "all" ]
 
-  auth-redis:
-    container_name: auth-redis
+  extract-otp:
+    container_name: extract-otp-service
+    build:
+      context: ./extract-otp
+      dockerfile: Dockerfile
+    ports:
+      - "${EXTRACT_OTP_SERVICE}:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      extract-otp-db:
+        condition: service_healthy
+    env_file:
+      - extract-otp/.env
+    profiles: [ "extract-otp", "all" ]
+
+  redis:
+    container_name: redis
     image: redis:alpine
     ports:
       - "${AUTH_REDIS_PORT}:6379"
@@ -61,8 +79,25 @@ services:
       start_period: 10s
     profiles: [ "authentication", "all" ]
 
-  auth-notification-rabbitmq:
-    container_name: auth-notification-rabbitmq
+  extract-otp-db:
+    container_name: extract-otp-db
+    image: postgres:alpine
+    ports:
+      - "${EXTRACT_OTP_POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${EXTRACT_OTP_POSTGRES_DB}
+      POSTGRES_USER: ${EXTRACT_OTP_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${EXTRACT_OTP_POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${EXTRACT_OTP_POSTGRES_USER} -d ${EXTRACT_OTP_POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    profiles: [ "extract-otp", "all" ]
+
+  rabbitmq:
+    container_name: rabbitmq
     image: rabbitmq:4.2.0-management-alpine
     ports:
       - "${NOTIFICATION_RABBITMQ_PORT}:5672"

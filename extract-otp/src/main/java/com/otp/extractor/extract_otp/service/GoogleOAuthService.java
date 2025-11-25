@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class GoogleOAuthService {
 
-    private final GmailWatchService gmailWatchService;
     private final UserService userService;
     private final GoogleAccessTokenCacheService googleAccessTokenCacheService;
     private final GmailRequestProducer gmailRequestProducer;

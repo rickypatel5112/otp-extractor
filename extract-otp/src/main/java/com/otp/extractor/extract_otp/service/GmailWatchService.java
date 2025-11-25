@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,7 +32,8 @@ public class GmailWatchService {
         Gmail gmailService = buildGmailService(email);
 
         WatchRequest watchRequest = new WatchRequest()
-                .setLabelIds(Collections.singletonList("INBOX"))
+                .setLabelIds(List.of("PRIMARY", "UNREAD"))
+                .setLabelFilterBehavior("INCLUDE")
                 .setTopicName(PUBSUB_TOPIC);
 
         WatchResponse watchResponse = gmailService.users()

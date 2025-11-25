@@ -15,10 +15,9 @@ import java.util.concurrent.ThreadLocalRandom;
 public class GmailRequestConsumer {
 
     private final GmailWatchService gmailWatchService;
-    private final RabbitTemplate rabbitTemplate;
 
     @RabbitListener(queues = "#{gmailRequestQueue.name}")
-    public void handleWatchRequest(String email) {
+    public void handleWatchRequest(String email) throws GoogleJsonResponseException {
         try {
             gmailWatchService.createWatchForUser(email);
 
@@ -37,10 +36,8 @@ public class GmailRequestConsumer {
 //                );
 //                return;
 //            }
-//            throw e; // go to DLQ if unrecoverable
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+            throw e; // go to DLQ if unrecoverable
+        } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
     }

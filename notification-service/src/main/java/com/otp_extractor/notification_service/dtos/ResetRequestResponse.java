@@ -9,9 +9,4 @@ public class ResetRequestResponse {
     private String email;
     private String resetToken;
     private String frontEndUrl;
-
-    public void setResetToken(String resetToken) {
-
-        this.resetToken = resetToken;
-    }
 }

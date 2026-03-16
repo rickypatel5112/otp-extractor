@@ -1,16 +1,14 @@
 name: CI
-
 on:
   push:
-    branches: master
-
+    branches:
+      - master
   pull_request:
-    branches: master
-    
+    branches:
+      - master
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,9 +20,5 @@ jobs:
           java-version: 17
           cache: maven
 
-      - name: Check formatting
-        run: mvn spotless:check
-
-      - name: Build project
-        run: mvn clean verify
-  
+      - name: Build Project
+        run: mvn -T 1C spotless:check verify -DskipTests

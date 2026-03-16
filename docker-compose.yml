@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   authentication:
     container_name: authentication-service

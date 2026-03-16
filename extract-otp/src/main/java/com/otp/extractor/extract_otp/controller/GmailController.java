@@ -58,6 +58,7 @@ public class GmailController {
         return ResponseEntity.ok("ACK");
     }
 
-    // Test comment
-
+    public String test() {
+        return "ACK";
+    }
 }

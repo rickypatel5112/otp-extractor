@@ -20,5 +20,11 @@ jobs:
           java-version: 17
           cache: maven
 
-      - name: Build Project
-        run: mvn -T 1C spotless:check verify -DskipTests
+      - name: Download dependencies
+        run: mvn -q dependency:go-offline
+
+      - name: Check formatting
+        run: mvn -q spotless:check
+
+      - name: Build project
+        run: mvn -T 1C clean verify

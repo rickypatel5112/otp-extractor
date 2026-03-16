@@ -10,9 +10,8 @@ public class ResetRequestResponse {
     private String resetToken;
     private String frontEndUrl;
 
-    public void  setResetToken(String resetToken) {
+    public void setResetToken(String resetToken) {
 
-
-
-        this.resetToken = resetToken;}
+        this.resetToken = resetToken;
+    }
 }

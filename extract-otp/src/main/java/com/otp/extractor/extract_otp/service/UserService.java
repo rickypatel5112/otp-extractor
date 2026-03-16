@@ -1,13 +1,11 @@
 package com.otp.extractor.extract_otp.service;
 
-import org.springframework.stereotype.Service;
-
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.otp.extractor.extract_otp.dto.GoogleUserInfo;
 import com.otp.extractor.extract_otp.repository.GoogleUserRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

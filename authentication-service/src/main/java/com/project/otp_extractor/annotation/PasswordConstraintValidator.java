@@ -1,11 +1,9 @@
 package com.project.otp_extractor.annotation;
 
-import java.util.Arrays;
-
-import org.passay.*;
-
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import java.util.Arrays;
+import org.passay.*;
 
 public class PasswordConstraintValidator implements ConstraintValidator<ValidPassword, String> {
 

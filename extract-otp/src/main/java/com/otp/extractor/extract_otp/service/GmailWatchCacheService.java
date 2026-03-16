@@ -2,7 +2,6 @@ package com.otp.extractor.extract_otp.service;
 
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;

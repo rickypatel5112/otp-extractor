@@ -1,23 +1,20 @@
 package com.project.otp_extractor.services;
 
+import com.project.otp_extractor.config.FrontendConfig;
+import com.project.otp_extractor.dtos.*;
+import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
+import com.project.otp_extractor.user.User;
+import com.project.otp_extractor.user.UserRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import java.util.Date;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import com.project.otp_extractor.config.FrontendConfig;
-import com.project.otp_extractor.dtos.*;
-import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
-import com.project.otp_extractor.user.User;
-import com.project.otp_extractor.user.UserRepository;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

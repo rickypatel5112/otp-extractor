@@ -1,15 +1,12 @@
 package com.otp.extractor.extract_otp.service;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.ThreadLocalRandom;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
-
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

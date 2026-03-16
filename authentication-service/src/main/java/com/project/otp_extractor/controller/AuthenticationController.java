@@ -1,5 +1,13 @@
 package com.project.otp_extractor.controller;
 
+import com.project.otp_extractor.dtos.*;
+import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
+import com.project.otp_extractor.services.AuthenticationService;
+import com.project.otp_extractor.services.JwtService;
+import com.project.otp_extractor.user.UserRepository;
+import io.jsonwebtoken.JwtException;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.AmqpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -7,16 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.project.otp_extractor.dtos.*;
-import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
-import com.project.otp_extractor.services.AuthenticationService;
-import com.project.otp_extractor.services.JwtService;
-import com.project.otp_extractor.user.UserRepository;
-
-import io.jsonwebtoken.JwtException;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/auth")

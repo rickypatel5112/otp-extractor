@@ -1,13 +1,11 @@
 package com.project.otp_extractor.services;
 
+import com.project.otp_extractor.dtos.ForgotPasswordResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-
-import com.project.otp_extractor.dtos.ForgotPasswordResponse;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

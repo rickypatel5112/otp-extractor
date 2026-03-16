@@ -1,8 +1,7 @@
 package com.project.otp_extractor.dtos;
 
-import java.time.Instant;
-
 import jakarta.persistence.Id;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

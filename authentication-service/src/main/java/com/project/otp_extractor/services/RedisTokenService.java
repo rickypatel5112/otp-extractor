@@ -1,16 +1,13 @@
 package com.project.otp_extractor.services;
 
+import com.project.otp_extractor.dtos.JwtTokenMetadata;
+import com.project.otp_extractor.dtos.TokenType;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import com.project.otp_extractor.dtos.JwtTokenMetadata;
-import com.project.otp_extractor.dtos.TokenType;
-
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

@@ -1,7 +1,6 @@
 package com.otp.extractor.extract_otp.config;
 
 import java.math.BigInteger;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -2,14 +2,6 @@ package com.otp.extractor.extract_otp.service;
 
 import static com.otp.extractor.extract_otp.service.GoogleAccessTokenCacheService.ACCESS_TOKEN_PREFIX;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -19,8 +11,13 @@ import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.otp.extractor.extract_otp.dto.GoogleUserInfo;
 import com.otp.extractor.extract_otp.repository.GoogleUserRepository;
-
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

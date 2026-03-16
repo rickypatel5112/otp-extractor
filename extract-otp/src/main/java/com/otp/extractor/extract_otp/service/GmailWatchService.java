@@ -1,5 +1,13 @@
 package com.otp.extractor.extract_otp.service;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Service;
+
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.gmail.Gmail;
@@ -7,48 +15,40 @@ import com.google.api.services.gmail.model.WatchRequest;
 import com.google.api.services.gmail.model.WatchResponse;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 public class GmailWatchService {
 
-    private static final String PUBSUB_TOPIC = "projects/otp-extractor-477323/topics/gmail-notify-topic";
+    private static final String PUBSUB_TOPIC =
+            "projects/otp-extractor-477323/topics/gmail-notify-topic";
     private final GoogleCredentialsService googleCredentialsService;
     private final GmailWatchCacheService gmailWatchCacheService;
 
-    @Getter
-    private final Set<String> userEmails = ConcurrentHashMap.newKeySet();
+    @Getter private final Set<String> userEmails = ConcurrentHashMap.newKeySet();
 
-    public WatchResponse createWatchForUser(String email) throws GeneralSecurityException, IOException {
+    public WatchResponse createWatchForUser(String email)
+            throws GeneralSecurityException, IOException {
         Gmail gmailService = buildGmailService(email);
 
-        WatchRequest watchRequest = new WatchRequest()
-                .setLabelIds(List.of("PRIMARY", "UNREAD"))
-                .setLabelFilterBehavior("INCLUDE")
-                .setTopicName(PUBSUB_TOPIC);
+        WatchRequest watchRequest =
+                new WatchRequest()
+                        .setLabelIds(List.of("PRIMARY", "UNREAD"))
+                        .setLabelFilterBehavior("INCLUDE")
+                        .setTopicName(PUBSUB_TOPIC);
 
-        WatchResponse watchResponse = gmailService.users()
-                .watch("me",  watchRequest)
-                .execute();
+        WatchResponse watchResponse = gmailService.users().watch("me", watchRequest).execute();
 
         userEmails.add(email);
 
         gmailWatchCacheService.addWatchHistoryId(
-                email,
-                watchResponse.getHistoryId(),
-                watchResponse.getExpiration()
-        );
+                email, watchResponse.getHistoryId(), watchResponse.getExpiration());
 
-        System.out.println("Watch setup historyId [" + email + "]: " + watchResponse.getHistoryId());
+        System.out.println(
+                "Watch setup historyId [" + email + "]: " + watchResponse.getHistoryId());
         return watchResponse;
     }
 
@@ -56,9 +56,10 @@ public class GmailWatchService {
         GoogleCredentials credentials = googleCredentialsService.getValidCredentials(email);
 
         return new Gmail.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                GsonFactory.getDefaultInstance(),
-                new HttpCredentialsAdapter(credentials)
-        ).setApplicationName("otp-extractor").build();
+                        GoogleNetHttpTransport.newTrustedTransport(),
+                        GsonFactory.getDefaultInstance(),
+                        new HttpCredentialsAdapter(credentials))
+                .setApplicationName("otp-extractor")
+                .build();
     }
 }

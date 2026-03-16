@@ -1,5 +1,14 @@
 package com.otp.extractor.extract_otp.service;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -7,15 +16,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.otp.extractor.extract_otp.dto.GoogleUserInfo;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -49,34 +51,35 @@ public class GoogleOAuthService {
                 userInfo.getEmail(),
                 tokenResponse.getAccessToken(),
                 tokenResponse.getExpiresInSeconds(),
-                TimeUnit.SECONDS
-        );
+                TimeUnit.SECONDS);
 
-        //Publish the message to rabbitmq
+        // Publish the message to rabbitmq
         gmailRequestProducer.requestWatchSetup(userInfo.getEmail());
 
-//        var watchResponse = gmailWatchService.createWatchForUser(userInfo.getEmail());
-//        return ResponseEntity.ok(watchResponse);
+        //        var watchResponse = gmailWatchService.createWatchForUser(userInfo.getEmail());
+        //        return ResponseEntity.ok(watchResponse);
 
         return ResponseEntity.ok("Watch.....");
     }
 
     private GoogleTokenResponse exchangeAuthCodeForTokens(String code) throws IOException {
         return new GoogleAuthorizationCodeTokenRequest(
-                httpTransport,
-                jsonFactory,
-                "https://oauth2.googleapis.com/token",
-                clientId,
-                clientSecret,
-                code,
-                redirectUri
-        ).execute();
+                        httpTransport,
+                        jsonFactory,
+                        "https://oauth2.googleapis.com/token",
+                        clientId,
+                        clientSecret,
+                        code,
+                        redirectUri)
+                .execute();
     }
 
-    private GoogleIdToken verifyIdToken(String idTokenString) throws GeneralSecurityException, IOException {
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
-                .setAudience(Collections.singletonList(clientId))
-                .build();
+    private GoogleIdToken verifyIdToken(String idTokenString)
+            throws GeneralSecurityException, IOException {
+        GoogleIdTokenVerifier verifier =
+                new GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
+                        .setAudience(Collections.singletonList(clientId))
+                        .build();
 
         GoogleIdToken idToken = verifier.verify(idTokenString);
         if (idToken == null) {
@@ -87,8 +90,8 @@ public class GoogleOAuthService {
     }
 }
 
-//Watch idea
-//lets say we keep track of global count and per user count per minute in redis or
+// Watch idea
+// lets say we keep track of global count and per user count per minute in redis or
 // something that has very fast read and writes and is time sensitive upto milliseconds.
 // and in our message broker we get a message our consumer consumes it and
 // checks if global count has exceeded or per user exceeded if any then should

@@ -1,10 +1,12 @@
 package com.otp_extractor.notification_service.services;
 
-import com.otp_extractor.notification_service.dtos.ResetRequestResponse;
-import jakarta.mail.MessagingException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
+
+import com.otp_extractor.notification_service.dtos.ResetRequestResponse;
+
+import jakarta.mail.MessagingException;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +21,8 @@ public class PasswordResetConsumer {
         final String frontEndUrl = resetRequestResponse.getFrontEndUrl();
         final String appName = "OTP Extractor"; // or inject via @Value("${app.name}")
 
-        String body = """
+        String body =
+                """
                 <!DOCTYPE html>
                 <html>
                   <body style="font-family: Arial, sans-serif; color: #333; background-color: #f7f7f7; padding: 20px;">
@@ -40,7 +43,8 @@ public class PasswordResetConsumer {
                     </div>
                   </body>
                 </html>
-                """.formatted(frontEndUrl, token, appName);
+                """
+                        .formatted(frontEndUrl, token, appName);
 
         emailSenderService.sendEmail(to, body);
     }

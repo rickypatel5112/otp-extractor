@@ -1,15 +1,16 @@
 package com.project.otp_extractor.user;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Collection;
-import java.util.List;
 
 @Data
 @Builder
@@ -19,9 +20,7 @@ import java.util.List;
 @Table(name = "_user")
 public class User implements UserDetails {
 
-    @Id
-    @GeneratedValue
-    private Integer id;
+    @Id @GeneratedValue private Integer id;
     private String firstname;
     private String lastname;
     private String email;

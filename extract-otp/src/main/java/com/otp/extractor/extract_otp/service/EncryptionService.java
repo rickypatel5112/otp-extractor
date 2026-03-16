@@ -21,5 +21,4 @@ public class EncryptionService {
     public String decrypt(String cipherText) {
         return encryptor.decrypt(cipherText);
     }
-
 }

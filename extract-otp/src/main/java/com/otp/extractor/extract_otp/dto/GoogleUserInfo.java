@@ -11,11 +11,10 @@ import lombok.*;
 @AllArgsConstructor
 public class GoogleUserInfo {
 
-    @Id
-    @GeneratedValue
-    private Long id;
+    @Id @GeneratedValue private Long id;
     private String email;
     private boolean verified;
+
     @Column(length = 2000)
     private String refreshToken;
 }

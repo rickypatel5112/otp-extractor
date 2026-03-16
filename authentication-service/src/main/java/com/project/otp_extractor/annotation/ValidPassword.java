@@ -1,13 +1,13 @@
 package com.project.otp_extractor.annotation;
 
+import java.lang.annotation.*;
+
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
-import java.lang.annotation.*;
-
 @Documented
 @Constraint(validatedBy = PasswordConstraintValidator.class)
-@Target({ ElementType.FIELD, ElementType.PARAMETER })
+@Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidPassword {
 

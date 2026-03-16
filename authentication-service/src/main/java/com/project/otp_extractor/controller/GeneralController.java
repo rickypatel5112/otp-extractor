@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class GeneralController {
 
     @GetMapping("/home")
-    public String print(){
+    public String print() {
         return "Hello from secured endpoint";
     }
 
     @GetMapping("/try")
-    public String print2(){
+    public String print2() {
         return "Hello from /try endpoint";
     }
 }

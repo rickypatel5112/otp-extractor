@@ -1,5 +1,7 @@
 package com.otp.extractor.extract_otp.config;
 
+import java.math.BigInteger;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +12,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import java.math.BigInteger;
 
 @Configuration
 public class RedisConfig {
@@ -24,26 +24,28 @@ public class RedisConfig {
 
     @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
-        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        RedisStandaloneConfiguration redisStandaloneConfiguration =
+                new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(hostName);
         redisStandaloneConfiguration.setPort(port);
         return new LettuceConnectionFactory(redisStandaloneConfiguration);
     }
 
     @Bean
-    public StringRedisTemplate googleAccessTokenRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public StringRedisTemplate googleAccessTokenRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory) {
         StringRedisTemplate redisTemplate = new StringRedisTemplate();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
     }
 
     @Bean
-    public RedisTemplate<String, BigInteger> gmailWatchStateRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, BigInteger> gmailWatchStateRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, BigInteger> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new GenericToStringSerializer<>(BigInteger.class));
         return redisTemplate;
     }
-
 }

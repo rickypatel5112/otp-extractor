@@ -8,8 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class ExtractOtpServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ExtractOtpServiceApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(ExtractOtpServiceApplication.class, args);
+    }
 }

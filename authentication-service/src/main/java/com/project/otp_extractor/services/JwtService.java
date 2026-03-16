@@ -1,17 +1,6 @@
 package com.project.otp_extractor.services;
 
-import com.project.otp_extractor.dtos.JwtTokenMetadata;
-import com.project.otp_extractor.dtos.TokenType;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
+import static com.project.otp_extractor.services.RedisTokenService.TOKEN_PREFIX;
 
 import java.security.Key;
 import java.time.Instant;
@@ -22,8 +11,20 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static com.project.otp_extractor.services.RedisTokenService.TOKEN_PREFIX;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
 
+import com.project.otp_extractor.dtos.JwtTokenMetadata;
+import com.project.otp_extractor.dtos.TokenType;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -52,10 +53,12 @@ public class JwtService {
     }
 
     private TokenType extractType(String jwt) {
-        return extractClaim(jwt, claims -> {
-            String typeStr = claims.get("type", String.class);
-            return TokenType.valueOf(typeStr);
-        });
+        return extractClaim(
+                jwt,
+                claims -> {
+                    String typeStr = claims.get("type", String.class);
+                    return TokenType.valueOf(typeStr);
+                });
     }
 
     public Date extractIssuedAt(String jwt) {
@@ -75,11 +78,12 @@ public class JwtService {
         return generateToken(new HashMap<>(), subject, tokenType);
     }
 
-    private String generateToken(Map<String, Object> extraClaims, String subject, TokenType tokenType) {
+    private String generateToken(
+            Map<String, Object> extraClaims, String subject, TokenType tokenType) {
 
         long expirationMillis = 0;
 
-        if(tokenType == TokenType.ACCESS){
+        if (tokenType == TokenType.ACCESS) {
             expirationMillis = 1000 * 60 * 15; // 15 mins
         } else if (tokenType == TokenType.REFRESH) {
             expirationMillis = 1000 * 60 * 30; // 7 days 1000 * 60 * 60 * 24 * 7
@@ -90,8 +94,7 @@ public class JwtService {
         extraClaims.put("pid", redisPIDService.getPasswordId(subject));
         extraClaims.put("type", tokenType.name());
 
-        return Jwts
-                .builder()
+        return Jwts.builder()
                 .setClaims(extraClaims)
                 .setId(UUID.randomUUID().toString())
                 .setSubject(subject)
@@ -119,9 +122,9 @@ public class JwtService {
             TokenType extractedType = extractType(token);
             String storedPID = redisPIDService.getPasswordId(extractSubject(token));
 
-            if (isTokenExpired(token) ||
-                    extractedType != tokenType ||
-                    !storedPID.equals(extractPID(token))) {
+            if (isTokenExpired(token)
+                    || extractedType != tokenType
+                    || !storedPID.equals(extractPID(token))) {
                 return false;
             }
 
@@ -129,16 +132,16 @@ public class JwtService {
             JwtTokenMetadata metadata = redisTemplate.opsForValue().get(TOKEN_PREFIX + jti);
 
             return switch (extractedType) {
-                // Access token: valid if not expired or revoked
+                    // Access token: valid if not expired or revoked
                 case ACCESS -> metadata == null || !metadata.isRevoked();
 
-                // Refresh token: must exist in Redis and not revoked
+                    // Refresh token: must exist in Redis and not revoked
                 case REFRESH -> metadata != null && !metadata.isRevoked();
 
-                // Reset token: Will be invalid after password changes (pid change)
+                    // Reset token: Will be invalid after password changes (pid change)
                 case RESET_PASSWORD -> true;
 
-                //Any other token is invalid by default
+                    // Any other token is invalid by default
                 default -> false;
             };
         } catch (JwtException e) {
@@ -152,8 +155,7 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String jwt) {
-        return Jwts
-                .parserBuilder()
+        return Jwts.parserBuilder()
                 .setSigningKey(getSignInKey())
                 .build()
                 .parseClaimsJws(jwt)

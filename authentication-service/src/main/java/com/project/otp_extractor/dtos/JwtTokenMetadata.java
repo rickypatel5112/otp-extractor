@@ -1,12 +1,12 @@
 package com.project.otp_extractor.dtos;
 
+import java.time.Instant;
+
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
 
 @Data
 @Builder
@@ -14,8 +14,7 @@ import java.time.Instant;
 @NoArgsConstructor
 public class JwtTokenMetadata {
 
-    @Id
-    private String jti;
+    @Id private String jti;
     private String userEmail;
     private Instant issuedAt;
     private Instant expiresAt;

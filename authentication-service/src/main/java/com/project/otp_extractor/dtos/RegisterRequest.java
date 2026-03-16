@@ -1,10 +1,10 @@
 package com.project.otp_extractor.dtos;
 
 import com.project.otp_extractor.annotation.ValidPassword;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Data
@@ -24,6 +24,5 @@ public class RegisterRequest {
     @NotNull
     private String email;
 
-    @ValidPassword
-    private String password;
+    @ValidPassword private String password;
 }

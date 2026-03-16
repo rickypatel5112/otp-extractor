@@ -1,11 +1,13 @@
 package com.otp.extractor.extract_otp.service;
 
+import org.springframework.stereotype.Service;
+
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.otp.extractor.extract_otp.dto.GoogleUserInfo;
 import com.otp.extractor.extract_otp.repository.GoogleUserRepository;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -15,11 +17,13 @@ public class UserService {
     private final EncryptionService encryptionService;
 
     public GoogleUserInfo saveOrUpdateUser(GoogleUserInfo user) {
-        return googleUserRepository.findByEmail(user.getEmail())
-                .map(existing -> {
-                    existing.setRefreshToken(user.getRefreshToken());
-                    return googleUserRepository.save(existing);
-                })
+        return googleUserRepository
+                .findByEmail(user.getEmail())
+                .map(
+                        existing -> {
+                            existing.setRefreshToken(user.getRefreshToken());
+                            return googleUserRepository.save(existing);
+                        })
                 .orElseGet(() -> googleUserRepository.save(user));
     }
 

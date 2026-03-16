@@ -1,13 +1,7 @@
 package com.project.otp_extractor.services;
 
-import com.project.otp_extractor.config.FrontendConfig;
-import com.project.otp_extractor.dtos.*;
-import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
-import com.project.otp_extractor.user.User;
-import com.project.otp_extractor.user.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import lombok.RequiredArgsConstructor;
+import java.util.Date;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.Date;
+import com.project.otp_extractor.config.FrontendConfig;
+import com.project.otp_extractor.dtos.*;
+import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
+import com.project.otp_extractor.user.User;
+import com.project.otp_extractor.user.UserRepository;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +32,7 @@ public class AuthenticationService {
     private final FrontendConfig frontendConfig;
     private final PasswordResetProducer passwordResetProducer;
 
-    public record TokenPair(String accessToken, String refreshToken) {
-    }
+    public record TokenPair(String accessToken, String refreshToken) {}
 
     @Transactional
     public void register(RegisterRequest request) throws UserAlreadyExistsException {
@@ -40,12 +41,13 @@ public class AuthenticationService {
             throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
         }
 
-        var user = User.builder()
-                .email(request.getEmail())
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .build();
+        var user =
+                User.builder()
+                        .email(request.getEmail())
+                        .firstname(request.getFirstname())
+                        .lastname(request.getLastname())
+                        .password(passwordEncoder.encode(request.getPassword()))
+                        .build();
 
         userRepository.save(user);
         redisPIDService.addPasswordId(request.getEmail());
@@ -53,18 +55,14 @@ public class AuthenticationService {
 
     public TokenPair authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         /**
-         We don't need this, we can be sure that the user would exist for that token.
-         TODO: The user when they delete their account, we'll revoke all their access and refresh tokens. This way
-         it won't pass the revocation check
+         * We don't need this, we can be sure that the user would exist for that token. TODO: The
+         * user when they delete their account, we'll revoke all their access and refresh tokens.
+         * This way it won't pass the revocation check
          */
-//        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        //        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
 
         String subject = request.getEmail();
 
@@ -107,13 +105,13 @@ public class AuthenticationService {
             accessToken = authorizationHeader.substring(7);
         }
 
-        //TODO: Check if accessToken and refreshToken are not null & are valid
+        // TODO: Check if accessToken and refreshToken are not null & are valid
         redisTokenService.addAccessToken(accessToken);
         jwtService.revokeToken(accessToken);
         jwtService.revokeToken(refreshToken);
     }
 
-    public void forgotPassword(@RequestBody ForgotPasswordRequest request){
+    public void forgotPassword(@RequestBody ForgotPasswordRequest request) {
 
         String email = request.getEmail();
         String frontEndUrl = request.getFrontEndUrl();
@@ -121,41 +119,45 @@ public class AuthenticationService {
         if (userRepository.findByEmail(email).isPresent()) {
             String resetToken = jwtService.generateToken(email, TokenType.RESET_PASSWORD);
 
-            if(!frontendConfig.isUrlAllowed(frontEndUrl)) return;
+            if (!frontendConfig.isUrlAllowed(frontEndUrl)) return;
 
-            var forgotPasswordResponse = ForgotPasswordResponse
-                                            .builder()
-                                            .resetToken(resetToken)
-                                            .email(email)
-                                            .frontEndUrl(frontEndUrl)
-                                            .build();
+            var forgotPasswordResponse =
+                    ForgotPasswordResponse.builder()
+                            .resetToken(resetToken)
+                            .email(email)
+                            .frontEndUrl(frontEndUrl)
+                            .build();
 
             passwordResetProducer.sendMessage(forgotPasswordResponse);
         }
     }
 
     @Transactional
-    public boolean resetPassword(String token, ResetPasswordRequest resetPasswordRequest) throws Exception {
+    public boolean resetPassword(String token, ResetPasswordRequest resetPasswordRequest)
+            throws Exception {
 
-        if(!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD)) {
+        if (!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD)) {
             throw new JwtException("Invalid token");
         }
 
         String password = resetPasswordRequest.password();
 
-        if(password == null || password.isEmpty()) {
+        if (password == null || password.isEmpty()) {
             throw new Exception("Password is null or empty");
         }
 
         String userEmail = jwtService.extractSubject(token);
 
-        boolean isSuccess = userRepository.findByEmail(userEmail)
-                .map(user -> {
-                    user.setPassword(passwordEncoder.encode(password));
-                    userRepository.save(user);
-                    return true;
-                })
-                .orElse(false);
+        boolean isSuccess =
+                userRepository
+                        .findByEmail(userEmail)
+                        .map(
+                                user -> {
+                                    user.setPassword(passwordEncoder.encode(password));
+                                    userRepository.save(user);
+                                    return true;
+                                })
+                        .orElse(false);
 
         if (isSuccess) {
             try {
@@ -178,7 +180,8 @@ public class AuthenticationService {
                 redisPIDService.removePasswordId(email);
             } catch (Exception e) {
                 // Redis failed - rollback DB transaction
-                throw new RuntimeException("Failed to remove password ID from Redis, rolling back DB delete", e);
+                throw new RuntimeException(
+                        "Failed to remove password ID from Redis, rolling back DB delete", e);
             }
         }
 

@@ -1,11 +1,11 @@
 package com.otp.extractor.extract_otp.service;
 
+import java.math.BigInteger;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class GmailWatchCacheService {
@@ -14,17 +14,19 @@ public class GmailWatchCacheService {
 
     public GmailWatchCacheService(
             @Qualifier("gmailWatchStateRedisTemplate")
-            RedisTemplate<String, BigInteger> redisTemplate) {
+                    RedisTemplate<String, BigInteger> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
-    public void addWatchHistoryId(String email, BigInteger watchHistoryId, Long expirationTimeStamp) {
-        redisTemplate.opsForValue().set(
-                WATCH_HISTORY_PREFIX + email,
-                watchHistoryId,
-                convertTimeStampToTTLSeconds(expirationTimeStamp),
-                TimeUnit.SECONDS
-        );
+    public void addWatchHistoryId(
+            String email, BigInteger watchHistoryId, Long expirationTimeStamp) {
+        redisTemplate
+                .opsForValue()
+                .set(
+                        WATCH_HISTORY_PREFIX + email,
+                        watchHistoryId,
+                        convertTimeStampToTTLSeconds(expirationTimeStamp),
+                        TimeUnit.SECONDS);
     }
 
     public BigInteger getWatchHistoryId(String email) {
@@ -35,7 +37,7 @@ public class GmailWatchCacheService {
         return redisTemplate.getExpire(WATCH_HISTORY_PREFIX + email, TimeUnit.SECONDS);
     }
 
-    private Long convertTimeStampToTTLSeconds(long expirationTimeStamp){
+    private Long convertTimeStampToTTLSeconds(long expirationTimeStamp) {
         return (expirationTimeStamp - System.currentTimeMillis()) / 1000;
     }
 }

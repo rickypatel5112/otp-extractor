@@ -1,14 +1,15 @@
 package com.otp.extractor.extract_otp.service;
 
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.ThreadLocalRandom;
+
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Service;
+
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -22,20 +23,20 @@ public class GmailRequestConsumer {
             gmailWatchService.createWatchForUser(email);
 
         } catch (GoogleJsonResponseException e) {
-//            if (isRateLimitError(e)) {
-//                long delayMs = calculateBackoff(email);
-//                // requeue with delay
-//                rabbitTemplate.convertAndSend(
-//                        "gmail.watch.delayed.exchange",
-//                        "gmail.watch.retry",
-//                        email,
-//                        m -> {
-//                            m.getMessageProperties().setDelay(delayMs);
-//                            return m;
-//                        }
-//                );
-//                return;
-//            }
+            //            if (isRateLimitError(e)) {
+            //                long delayMs = calculateBackoff(email);
+            //                // requeue with delay
+            //                rabbitTemplate.convertAndSend(
+            //                        "gmail.watch.delayed.exchange",
+            //                        "gmail.watch.retry",
+            //                        email,
+            //                        m -> {
+            //                            m.getMessageProperties().setDelay(delayMs);
+            //                            return m;
+            //                        }
+            //                );
+            //                return;
+            //            }
             throw e; // go to DLQ if unrecoverable
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
@@ -43,8 +44,8 @@ public class GmailRequestConsumer {
     }
 
     private boolean isRateLimitError(GoogleJsonResponseException e) {
-        return e.getStatusCode() == 429 ||
-                e.getDetails().getErrors().stream()
+        return e.getStatusCode() == 429
+                || e.getDetails().getErrors().stream()
                         .anyMatch(err -> err.getReason().contains("rateLimitExceeded"));
     }
 

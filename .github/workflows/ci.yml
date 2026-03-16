@@ -21,10 +21,10 @@ jobs:
           cache: maven
 
       - name: Download dependencies
-        run: mvn -q dependency:go-offline
+        run: mvn -B dependency:go-offline
 
       - name: Check formatting
-        run: mvn -q spotless:check
+        run: mvn -B spotless:check
 
       - name: Build project
-        run: mvn -T 1C clean verify
+        run: mvn -B -T 1C clean verify

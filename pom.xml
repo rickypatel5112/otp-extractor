@@ -28,26 +28,24 @@
     </properties>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>com.diffplug.spotless</groupId>
-                    <artifactId>spotless-maven-plugin</artifactId>
-                    <version>2.43.0</version>
-                    <configuration>
-                        <java>
-                            <removeUnusedImports/>
-                            <googleJavaFormat>
-                                <version>1.35.0</version>
-                                <style>AOSP</style>
-                            </googleJavaFormat>
-                            <importOrder>
-                                <order>java|javax,org,com,*</order>
-                            </importOrder>
-                        </java>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <java>
+                        <removeUnusedImports/>
+                        <googleJavaFormat>
+                            <version>1.19.2</version>
+                            <style>AOSP</style>
+                        </googleJavaFormat>
+                        <importOrder>
+                            <order>java|javax,org,com,*</order>
+                        </importOrder>
+                    </java>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>

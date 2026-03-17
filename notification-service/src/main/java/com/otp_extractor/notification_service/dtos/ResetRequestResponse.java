@@ -9,4 +9,9 @@ public class ResetRequestResponse {
     private String email;
     private String resetToken;
     private String frontEndUrl;
+
+    private String testMethod() {
+        System.out.println("ResetRequestResponse");
+        return "ResetRequestResponse";
+    }
 }

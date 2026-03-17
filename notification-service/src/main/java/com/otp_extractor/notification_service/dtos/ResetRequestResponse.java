@@ -12,5 +12,6 @@ public class ResetRequestResponse {
 
     private String testMethod() {
         System.out.println("ResetRequestResponse");
-        return "ResetRequestResponse";}
+        return "ResetRequestResponse";
+    }
 }

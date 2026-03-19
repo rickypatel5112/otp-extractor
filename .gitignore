@@ -1,43 +1,95 @@
-HELP.md
+############################
+# Maven / Build
+############################
 target/
-.mvn/wrapper/maven-wrapper.jar
-.mvn/timing.properties
+**/target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
-.apt_generated
+############################
+# Maven Wrapper (keep scripts, ignore jar if desired)
+############################
+.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+############################
+# Logs
+############################
+*.log
+
+############################
+# OS Files
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# IDEs
+############################
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse / STS
 .classpath
-.factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+# VS Code
 .vscode/
 
+############################
+# Environment / Secrets
+############################
+.env
 **/.env
-**/.idea
-**/pgdata
-**/target
+*.env
+*.local
+
+**/*-sa-key.json
+**/*secret*.json
+**/credentials*.json
+
+# Allow example env files
+!demo.env
+!**/demo.env
+
+############################
+# Docker / Volumes
+############################
+**/pgdata/
+**/docker-data/
+**/volumes/
+
+############################
+# Node / Frontend (if added later)
+############################
+node_modules/
+
+############################
+# Generated / Temp
+############################
+*.tmp
+*.swp
+*.swo
+
+############################
+# Test Output
+############################
+surefire-reports/
+failsafe-reports/
+
+############################
+# Spotless
+############################
+**/spotless-index
+
+############################
+# Misc
+############################
+HELP.md

@@ -27,4 +27,4 @@ jobs:
         run: mvn -B spotless:check
 
       - name: Build project
-        run: mvn -B -T 1C clean verify -DskipTests
+        run: mvn -B -T 1C clean verify

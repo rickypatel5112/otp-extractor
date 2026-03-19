@@ -9,6 +9,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,7 +47,11 @@ public class AuthenticationService {
                         .password(passwordEncoder.encode(request.getPassword()))
                         .build();
 
-        userRepository.save(user);
+        try {
+            userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
+        }
         redisPIDService.addPasswordId(request.getEmail());
     }
 

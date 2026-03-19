@@ -2,8 +2,6 @@ name: Build Jars
 on:
   workflow_run:
     workflows: ["Run Tests"]
-    branches:
-      - "*"
     types:
       - completed
 

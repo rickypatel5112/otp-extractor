@@ -7,12 +7,12 @@
 #
 # To enable this hook, rename this file to "pre-commit".
 
-echo "Running spotless..."
+echo "Running spotless......"
 
 mvn spotless:apply
 git add -u
 
-echo "Finished spotless..."
+echo "Finished spotless......"
 
 if git rev-parse --verify HEAD >/dev/null 2>&1
 then

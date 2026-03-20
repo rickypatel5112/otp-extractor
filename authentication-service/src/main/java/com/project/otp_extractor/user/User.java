@@ -1,6 +1,9 @@
 package com.project.otp_extractor.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.Collection;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -19,10 +22,20 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class User implements UserDetails {
 
     @Id @GeneratedValue private Integer id;
+
+    @NotBlank
+    @Size(max = 100)
+    @Column(nullable = false, length = 100)
     private String firstname;
+
+    @NotBlank
+    @Size(max = 100)
+    @Column(nullable = false, length = 100)
     private String lastname;
 
-    @Column(unique = true)
+    @NotBlank
+    @Email
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String password;

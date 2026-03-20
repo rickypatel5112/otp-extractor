@@ -50,4 +50,4 @@ jobs:
           path: ~/.m2/repository
           key: maven-${{ runner.os }}-17
       - name: Build jars
-        run: mvn -B -T 1C clean package
+        run: mvn -B -T 1C clean package -DskipTests

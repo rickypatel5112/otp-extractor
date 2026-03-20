@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.project.otp_extractor.user.User;
 import com.project.otp_extractor.user.UserRepository;
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @TestPropertySource(properties = {"spring.jpa.hibernate.ddl-auto=create"})
 public class UserRepositoryTest {
 
-    @Container
-    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
+    @Container static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
 
     @Autowired private UserRepository userRepository;
 
@@ -40,80 +40,62 @@ public class UserRepositoryTest {
     @BeforeEach
     void setup() {
         userRepository.deleteAll();
+
+        User user1 = createUser("test1@gmail.com");
+        User user2 = createUser("test2@gmail.com");
+
+        userRepository.save(user1);
+        userRepository.save(user2);
+    }
+
+    private User createUser(String email) {
+        return User.builder()
+                .firstname("John")
+                .lastname("Doe")
+                .email(email)
+                .password("Password1!")
+                .build();
     }
 
     @Test
-    void shouldContainMoreThanOneUser() {
-        User user = User.builder().email("test1@gmail.com").build();
-
-        User user2 = User.builder().email("test2@gmail.com").build();
-
-        userRepository.save(user);
-        userRepository.save(user2);
-
+    void shouldFindAllUsers() {
         List<User> users = userRepository.findAll();
-
         assertEquals(2, users.size());
     }
 
     @Test
     void shouldFindUserByEmail() {
-        User user = User.builder().email("test@example.com").build();
-
-        userRepository.save(user);
-
-        Optional<User> found = userRepository.findByEmail("test@example.com");
+        Optional<User> found = userRepository.findByEmail("test1@gmail.com");
 
         assertTrue(found.isPresent());
-        assertEquals("test@example.com", found.get().getEmail());
+        assertEquals("test1@gmail.com", found.get().getEmail());
     }
 
     @Test
     void shouldReturnEmptyWhenEmailNotFound() {
-        Optional<User> found = userRepository.findByEmail("notfound@example.com");
+        Optional<User> found = userRepository.findByEmail("notfound@gmail.com");
 
         assertTrue(found.isEmpty());
     }
 
     @Test
-    void shouldReturnAllUsers_whenMultipleUsersExist() {
-        userRepository.save(User.builder().email("test1@gmail.com").build());
-        userRepository.save(User.builder().email("test2@gmail.com").build());
-
-        List<User> users = userRepository.findAll();
-
-        assertEquals(2, users.size());
-    }
-
-    @Test
-    void shouldReturnEmptyList_whenNoUsersExist() {
-        List<User> users = userRepository.findAll();
-
-        assertTrue(users.isEmpty());
-    }
-
-    @Test
     void shouldDeleteUserByEmail() {
-        User user = User.builder().email("delete@test.com").build();
+        long deleted = userRepository.deleteByEmail("test1@gmail.com");
 
-        userRepository.save(user);
-
-        long deletedCount = userRepository.deleteByEmail("delete@test.com");
-
-        assertEquals(1, deletedCount);
-        assertTrue(userRepository.findByEmail("delete@test.com").isEmpty());
+        assertEquals(1, deleted);
+        assertTrue(userRepository.findByEmail("test1@gmail.com").isEmpty());
     }
 
     @Test
-    void shouldReturnZero_whenDeletingNonExistingUser() {
-        long deletedCount = userRepository.deleteByEmail("ghost@test.com");
+    void shouldReturnZeroWhenDeletingNonExistingUser() {
+        long deleted = userRepository.deleteByEmail("ghost@gmail.com");
 
-        assertEquals(0, deletedCount);
+        assertEquals(0, deleted);
     }
 
     @Test
     void shouldGenerateIdOnSave() {
-        User user = User.builder().email("id@test.com").build();
+        User user = createUser("new@test.com");
 
         User saved = userRepository.save(user);
 
@@ -122,30 +104,206 @@ public class UserRepositoryTest {
 
     @Test
     void shouldUpdateUserEmail() {
-        User user = User.builder().email("old@test.com").build();
+        User user = userRepository.findByEmail("test1@gmail.com").orElseThrow();
 
-        user = userRepository.save(user);
-
-        user.setEmail("new@test.com");
+        user.setEmail("updated@test.com");
         userRepository.save(user);
 
-        Optional<User> updated = userRepository.findByEmail("new@test.com");
-
-        assertTrue(updated.isPresent());
+        assertFalse(userRepository.findByEmail("test1@gmail.com").isPresent());
+        assertTrue(userRepository.findByEmail("updated@test.com").isPresent());
     }
 
     @Test
-    void shouldThrowException_whenSavingDuplicateEmail() {
-        User user1 = User.builder().email("duplicate@test.com").build();
-
-        User user2 = User.builder().email("duplicate@test.com").build();
-
-        userRepository.saveAndFlush(user1);
+    void shouldThrowExceptionWhenSavingDuplicateEmail() {
+        User duplicate = createUser("test1@gmail.com");
 
         assertThrows(
                 DataIntegrityViolationException.class,
                 () -> {
-                    userRepository.saveAndFlush(user2);
+                    userRepository.saveAndFlush(duplicate);
                 });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenEmailIsNull() {
+        User invalid = createUser(null);
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(invalid);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenEmailIsInvalid() {
+        User invalid = createUser("invalid_email");
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(invalid);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenEmailIsEmptyString() {
+        User invalid = createUser("");
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(invalid);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOnlyEmailSuffixIsPresent() {
+        User invalid = createUser("@gmail.com");
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(invalid);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenFirstNameIsNull() {
+        User invalid =
+                User.builder()
+                        .firstname(null)
+                        .lastname("lastname")
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(invalid);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenLastNameIsNull() {
+        User invalid =
+                User.builder()
+                        .firstname("firstname")
+                        .lastname(null)
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(invalid);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenFirstNameIsEmpty() {
+        User user =
+                User.builder()
+                        .firstname("")
+                        .lastname("lastname")
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(user);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenLastNameIsEmpty() {
+        User user =
+                User.builder()
+                        .firstname("firstname")
+                        .lastname("")
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(user);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenFirstNameLengthIsMoreThan100Characters() {
+        String firstname = "a".repeat(101);
+
+        User user =
+                User.builder()
+                        .firstname(firstname)
+                        .lastname("lastname")
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(user);
+                });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenLastNameLengthIsMoreThan100Characters() {
+        String lastname = "a".repeat(101);
+
+        User user =
+                User.builder()
+                        .firstname("firstname")
+                        .lastname(lastname)
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        assertThrows(
+                ConstraintViolationException.class,
+                () -> {
+                    userRepository.saveAndFlush(user);
+                });
+    }
+
+    @Test
+    void shouldCreateUserWhenFirstNameLengthIs100Characters() {
+        String firstname = "a".repeat(100);
+
+        User user =
+                User.builder()
+                        .firstname(firstname)
+                        .lastname("lastname")
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        userRepository.save(user);
+
+        assertTrue(userRepository.findByEmail("valid@gmail.com").isPresent());
+    }
+
+    @Test
+    void shouldCreateUserWhenLastNameLengthIs100Characters() {
+        String lastname = "a".repeat(100);
+
+        User user =
+                User.builder()
+                        .firstname("firstname")
+                        .lastname(lastname)
+                        .email("valid@gmail.com")
+                        .password("ValidPassword1@")
+                        .build();
+
+        userRepository.save(user);
+
+        assertTrue(userRepository.findByEmail("valid@gmail.com").isPresent());
     }
 }

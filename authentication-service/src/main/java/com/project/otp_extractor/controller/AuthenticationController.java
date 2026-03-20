@@ -3,8 +3,6 @@ package com.project.otp_extractor.controller;
 import com.project.otp_extractor.dtos.*;
 import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
 import com.project.otp_extractor.services.AuthenticationService;
-import com.project.otp_extractor.services.JwtService;
-import com.project.otp_extractor.user.UserRepository;
 import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +21,6 @@ public class AuthenticationController {
 
     private static final String cookiePath = "/api/v1/auth";
     private final AuthenticationService authenticationService;
-    private final UserRepository userRepository;
-    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request)

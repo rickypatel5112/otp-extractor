@@ -27,7 +27,7 @@ services:
     ports:
       - "${EXTRACT_OTP_REDIS_PORT}:6379"
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +38,8 @@ services:
     ports:
       - "${EXTRACT_OTP_DB_PORT}:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${TOKEN_DB_USERNAME} -d ${TOKEN_DB_NAME}" ]
+      test:
+        ["CMD-SHELL", "pg_isready -U ${TOKEN_DB_USERNAME} -d ${TOKEN_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -63,7 +64,7 @@ services:
     image: rabbitmq:4.2.0-management-alpine
     container_name: rabbitmq
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

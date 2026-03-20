@@ -28,7 +28,11 @@ services:
       POSTGRES_USER: ${AUTH_POSTGRES_USER}
       POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,11 +55,11 @@ services:
     image: rabbitmq:4.2.0-management-alpine
     container_name: rabbitmq
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     ports:
-     - "${NOTIFICATION_RABBITMQ_PORT}:5672"
-     - "${NOTIFICATION_RABBITMQ_MANAGEMENT_PORT}:15672"
+      - "${NOTIFICATION_RABBITMQ_PORT}:5672"
+      - "${NOTIFICATION_RABBITMQ_MANAGEMENT_PORT}:15672"

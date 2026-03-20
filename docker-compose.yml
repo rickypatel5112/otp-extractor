@@ -15,7 +15,7 @@ services:
         condition: service_healthy
     env_file:
       - authentication-service/.env
-    profiles: [ "authentication", "all" ]
+    profiles: ["authentication", "all"]
 
   notification:
     container_name: notification-service
@@ -29,7 +29,7 @@ services:
         condition: service_healthy
     env_file:
       - notification-service/.env
-    profiles: [ "notification", "all" ]
+    profiles: ["notification", "all"]
 
   extract-otp:
     container_name: extract-otp-service
@@ -47,7 +47,7 @@ services:
         condition: service_healthy
     env_file:
       - extract-otp/.env
-    profiles: [ "extract-otp", "all" ]
+    profiles: ["extract-otp", "all"]
 
   redis:
     container_name: redis
@@ -55,11 +55,11 @@ services:
     ports:
       - "${AUTH_REDIS_PORT}:6379"
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    profiles: [ "authentication", "all" ]
+    profiles: ["authentication", "all"]
 
   auth-db:
     container_name: auth-db
@@ -71,12 +71,16 @@ services:
       POSTGRES_USER: ${AUTH_POSTGRES_USER}
       POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}" ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    profiles: [ "authentication", "all" ]
+    profiles: ["authentication", "all"]
 
   extract-otp-db:
     container_name: extract-otp-db
@@ -88,12 +92,16 @@ services:
       POSTGRES_USER: ${EXTRACT_OTP_POSTGRES_USER}
       POSTGRES_PASSWORD: ${EXTRACT_OTP_POSTGRES_PASSWORD}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${EXTRACT_OTP_POSTGRES_USER} -d ${EXTRACT_OTP_POSTGRES_DB}" ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${EXTRACT_OTP_POSTGRES_USER} -d ${EXTRACT_OTP_POSTGRES_DB}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    profiles: [ "extract-otp", "all" ]
+    profiles: ["extract-otp", "all"]
 
   rabbitmq:
     container_name: rabbitmq
@@ -105,7 +113,7 @@ services:
       NOTIFICATION_RABBITMQ_USERNAME: ${NOTIFICATION_RABBITMQ_USERNAME}
       NOTIFICATION_RABBITMQ_PASSWORD: ${NOTIFICATION_RABBITMQ_PASSWORD}
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

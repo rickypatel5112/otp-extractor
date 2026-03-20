@@ -12,7 +12,7 @@ services:
     image: rabbitmq:4.2.0-management-alpine
     container_name: rabbitmq
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

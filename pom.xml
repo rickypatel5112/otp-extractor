@@ -1,7 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0          http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -41,6 +40,41 @@
                         </googleJavaFormat>
                         <removeUnusedImports/>
                     </java>
+                    <yaml>
+                        <includes>
+                            <include>**/*.yml</include>
+                            <include>**/*.yaml</include>
+                        </includes>
+                        <prettier/>
+                    </yaml>
+                    <json>
+                        <includes>
+                            <include>**/*.json</include>
+                        </includes>
+                        <prettier/>
+                    </json>
+                    <pom>
+                        <includes>
+                            <include>**/pom.xml</include>
+                        </includes>
+                        <sortPom>
+                            <encoding>UTF-8</encoding>
+                            <expandEmptyElements>false</expandEmptyElements>
+                            <keepBlankLines>true</keepBlankLines>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                            <indentBlankLines>false</indentBlankLines>
+                            <indentSchemaLocation>true</indentSchemaLocation>
+                        </sortPom>
+                    </pom>
+                    <formats>
+                        <format>
+                            <includes>
+                                <include>**/*.properties</include>
+                            </includes>
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
+                        </format>
+                    </formats>
                 </configuration>
             </plugin>
         </plugins>

@@ -129,16 +129,16 @@ public class JwtService {
             JwtTokenMetadata metadata = redisTemplate.opsForValue().get(TOKEN_PREFIX + jti);
 
             return switch (extractedType) {
-                    // Access token: valid if not expired or revoked
+                // Access token: valid if not expired or revoked
                 case ACCESS -> metadata == null || !metadata.isRevoked();
 
-                    // Refresh token: must exist in Redis and not revoked
+                // Refresh token: must exist in Redis and not revoked
                 case REFRESH -> metadata != null && !metadata.isRevoked();
 
-                    // Reset token: Will be invalid after password changes (pid change)
+                // Reset token: Will be invalid after password changes (pid change)
                 case RESET_PASSWORD -> true;
 
-                    // Any other token is invalid by default
+                // Any other token is invalid by default
                 default -> false;
             };
         } catch (JwtException e) {

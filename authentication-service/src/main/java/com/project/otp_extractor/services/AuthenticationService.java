@@ -177,6 +177,8 @@ public class AuthenticationService {
     public long deleteAccount(String email) {
         long deletedCount = userRepository.deleteByEmail(email);
 
+        // TODO: Also delete google's refresh and access tokens from redis
+
         if (deletedCount > 0) {
             try {
                 redisPIDService.removePasswordId(email);

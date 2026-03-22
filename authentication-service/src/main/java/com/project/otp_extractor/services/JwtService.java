@@ -34,19 +34,39 @@ public class JwtService {
     private String SECRET_KEY;
 
     public String extractSubject(String jwt) {
-        return extractClaim(jwt, Claims::getSubject);
+        return extractClaim(
+                jwt,
+                claims -> {
+                    String subject = claims.getSubject();
+                    if (subject == null) {
+                        throw new JwtException("Missing subject");
+                    }
+                    return subject;
+                });
     }
 
     private String extractPID(String jwt) {
-        return extractClaim(jwt, claims -> claims.get("pid").toString());
-    }
-
-    private Date extractExpiration(String jwt) {
-        return extractClaim(jwt, Claims::getExpiration);
+        return extractClaim(
+                jwt,
+                claims -> {
+                    Object pid = claims.get("pid");
+                    if (pid == null) {
+                        throw new JwtException("Missing pid claim");
+                    }
+                    return pid.toString();
+                });
     }
 
     public String extractJti(String jwt) {
-        return extractClaim(jwt, Claims::getId);
+        return extractClaim(
+                jwt,
+                claims -> {
+                    String jti = claims.getId();
+                    if (jti == null) {
+                        throw new JwtException("Missing jti");
+                    }
+                    return jti;
+                });
     }
 
     private TokenType extractType(String jwt) {
@@ -54,7 +74,14 @@ public class JwtService {
                 jwt,
                 claims -> {
                     String typeStr = claims.get("type", String.class);
-                    return TokenType.valueOf(typeStr);
+                    if (typeStr == null) {
+                        throw new JwtException("Missing token type");
+                    }
+                    try {
+                        return TokenType.valueOf(typeStr);
+                    } catch (IllegalArgumentException e) {
+                        throw new JwtException("Invalid token type");
+                    }
                 });
     }
 
@@ -117,11 +144,15 @@ public class JwtService {
     public boolean isTokenValid(String token, TokenType tokenType) {
         try {
             TokenType extractedType = extractType(token);
-            String storedPID = redisPIDService.getPasswordId(extractSubject(token));
 
-            if (isTokenExpired(token)
-                    || extractedType != tokenType
-                    || !storedPID.equals(extractPID(token))) {
+            if (isTokenExpired(token) || extractedType != tokenType) {
+                return false;
+            }
+
+            String storedPID = redisPIDService.getPasswordId(extractSubject(token));
+            String tokenPID = extractPID(token);
+
+            if (storedPID == null || !storedPID.equals(tokenPID)) {
                 return false;
             }
 
@@ -148,7 +179,7 @@ public class JwtService {
     }
 
     public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        return extractExpiresAt(token).before(new Date());
     }
 
     private Claims extractAllClaims(String jwt) {

@@ -13,6 +13,11 @@ public class RedisPIDService {
     static final String PWD_ID_PREFIX = "pid:";
 
     public void addPasswordId(String userEmail) {
+
+        if (userEmail == null || userEmail.isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be null or empty");
+        }
+
         stringRedisTemplate
                 .opsForValue()
                 .set(PWD_ID_PREFIX + userEmail, UUID.randomUUID().toString());
@@ -22,7 +27,12 @@ public class RedisPIDService {
         return stringRedisTemplate.opsForValue().get(PWD_ID_PREFIX + userEmail);
     }
 
-    public void removePasswordId(String email) {
-        stringRedisTemplate.delete(PWD_ID_PREFIX + email);
+    public boolean removePasswordId(String email) {
+        if (email == null || email.isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be null or empty");
+        }
+
+        Boolean result = stringRedisTemplate.delete(PWD_ID_PREFIX + email);
+        return Boolean.TRUE.equals(result);
     }
 }

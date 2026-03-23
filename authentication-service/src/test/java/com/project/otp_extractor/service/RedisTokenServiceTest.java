@@ -1,9 +1,14 @@
 package com.project.otp_extractor.service;
 
+import static org.mockito.Mockito.*;
+
 import com.project.otp_extractor.dtos.JwtTokenMetadata;
 import com.project.otp_extractor.dtos.TokenType;
 import com.project.otp_extractor.services.JwtService;
 import com.project.otp_extractor.services.RedisTokenService;
+import java.time.Instant;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,26 +16,16 @@ import org.mockito.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
-import java.time.Instant;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.*;
-
 @ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
 class RedisTokenServiceTest {
 
-    @Mock
-    private JwtService jwtService;
+    @Mock private JwtService jwtService;
 
-    @Mock
-    private RedisTemplate<String, JwtTokenMetadata> redisTemplate;
+    @Mock private RedisTemplate<String, JwtTokenMetadata> redisTemplate;
 
-    @Mock
-    private ValueOperations<String, JwtTokenMetadata> valueOperations;
+    @Mock private ValueOperations<String, JwtTokenMetadata> valueOperations;
 
-    @InjectMocks
-    private RedisTokenService redisTokenService;
+    @InjectMocks private RedisTokenService redisTokenService;
 
     private final String token = "test-token";
     private final String jti = "jti-123";
@@ -56,12 +51,12 @@ class RedisTokenServiceTest {
         ArgumentCaptor<JwtTokenMetadata> metadataCaptor =
                 ArgumentCaptor.forClass(JwtTokenMetadata.class);
 
-        verify(valueOperations).set(
-                eq("token:" + jti),
-                metadataCaptor.capture(),
-                anyLong(),
-                eq(TimeUnit.MILLISECONDS)
-        );
+        verify(valueOperations)
+                .set(
+                        eq("token:" + jti),
+                        metadataCaptor.capture(),
+                        anyLong(),
+                        eq(TimeUnit.MILLISECONDS));
 
         JwtTokenMetadata metadata = metadataCaptor.getValue();
 
@@ -85,12 +80,12 @@ class RedisTokenServiceTest {
         ArgumentCaptor<JwtTokenMetadata> metadataCaptor =
                 ArgumentCaptor.forClass(JwtTokenMetadata.class);
 
-        verify(valueOperations).set(
-                eq("token:" + jti),
-                metadataCaptor.capture(),
-                anyLong(),
-                eq(TimeUnit.MILLISECONDS)
-        );
+        verify(valueOperations)
+                .set(
+                        eq("token:" + jti),
+                        metadataCaptor.capture(),
+                        anyLong(),
+                        eq(TimeUnit.MILLISECONDS));
 
         JwtTokenMetadata metadata = metadataCaptor.getValue();
 

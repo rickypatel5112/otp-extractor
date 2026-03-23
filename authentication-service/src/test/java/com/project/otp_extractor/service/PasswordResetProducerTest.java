@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import com.project.otp_extractor.dtos.ForgotPasswordResponse;
 import com.project.otp_extractor.services.PasswordResetProducer;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -17,10 +17,13 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+@ExtendWith(MockitoExtension.class)
 class JwtServiceTest {
 
     private static final String TOKEN_PREFIX = "token:";
@@ -37,9 +40,7 @@ class JwtServiceTest {
 
     @BeforeEach
     void setup() throws Exception {
-        MockitoAnnotations.openMocks(this);
-
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         Field field = JwtService.class.getDeclaredField("SECRET_KEY");
         field.setAccessible(true);
@@ -48,9 +49,6 @@ class JwtServiceTest {
         key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET));
     }
 
-    // =========================
-    // Helper for real JWTs
-    // =========================
     private String buildToken(String subject, String pid, String type, long expiryMillis) {
         return Jwts.builder()
                 .setSubject(subject)
@@ -92,8 +90,6 @@ class JwtServiceTest {
 
     @Test
     void shouldReturnFalseWhenTokenIsActuallyExpired() {
-        when(redisPIDService.getPasswordId("user@gmail.com")).thenReturn("pid");
-
         String token = buildToken("user@gmail.com", "pid", TokenType.ACCESS.name(), -1000);
 
         assertFalse(jwtService.isTokenValid(token, TokenType.ACCESS));
@@ -197,8 +193,6 @@ class JwtServiceTest {
 
     @Test
     void shouldReturnFalseWhenTypeClaimIsInvalidEnum() {
-        when(redisPIDService.getPasswordId("user@gmail.com")).thenReturn("pid");
-
         String token = buildToken("user@gmail.com", "pid", "INVALID", 60000);
 
         assertFalse(jwtService.isTokenValid(token, TokenType.ACCESS));
@@ -206,8 +200,6 @@ class JwtServiceTest {
 
     @Test
     void shouldReturnFalseWhenTypeClaimMissing() {
-        when(redisPIDService.getPasswordId("user@gmail.com")).thenReturn("pid");
-
         String token =
                 Jwts.builder()
                         .setSubject("user@gmail.com")

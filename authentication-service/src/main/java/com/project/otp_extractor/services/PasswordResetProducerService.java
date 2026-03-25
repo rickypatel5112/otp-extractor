@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class PasswordResetProducer {
+public class PasswordResetProducerService {
 
     private final RabbitTemplate rabbitTemplate;
     private final Queue passwordResetQueue;

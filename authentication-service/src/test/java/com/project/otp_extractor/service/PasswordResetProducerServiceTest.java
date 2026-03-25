@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.project.otp_extractor.dtos.ForgotPasswordResponse;
-import com.project.otp_extractor.services.PasswordResetProducer;
+import com.project.otp_extractor.services.PasswordResetProducerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,13 +16,13 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @ExtendWith(MockitoExtension.class)
-class PasswordResetProducerTest {
+class PasswordResetProducerServiceTest {
 
     @Mock private RabbitTemplate rabbitTemplate;
 
     @Mock private Queue passwordResetQueue;
 
-    @InjectMocks private PasswordResetProducer producer;
+    @InjectMocks private PasswordResetProducerService producer;
 
     private ForgotPasswordResponse response;
 

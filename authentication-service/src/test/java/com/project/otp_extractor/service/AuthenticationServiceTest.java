@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.project.otp_extractor.config.FrontendConfig;
 import com.project.otp_extractor.dtos.*;
 import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
+import com.project.otp_extractor.exceptions.UserNotFoundException;
 import com.project.otp_extractor.services.*;
 import com.project.otp_extractor.user.User;
 import com.project.otp_extractor.user.UserRepository;
@@ -32,7 +33,7 @@ class AuthenticationServiceTest {
     @Mock private RedisTokenService redisTokenService;
     @Mock private RedisPIDService redisPIDService;
     @Mock private FrontendConfig frontendConfig;
-    @Mock private PasswordResetProducer passwordResetProducer;
+    @Mock private PasswordResetProducerService passwordResetProducerService;
 
     @InjectMocks private AuthenticationService authenticationService;
 
@@ -50,8 +51,7 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldEncodePasswordAndSaveUserAndStorePasswordIdWhenRegisteringNewUser()
-            throws Exception {
+    void shouldEncodePasswordAndSaveUserAndStorePasswordIdWhenRegisteringNewUser() {
         when(userRepository.findByEmail(registerRequest.getEmail())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encoded");
 
@@ -181,7 +181,7 @@ class AuthenticationServiceTest {
 
         authenticationService.forgotPassword(request);
 
-        verify(passwordResetProducer).sendMessage(any());
+        verify(passwordResetProducerService).sendMessage(any());
     }
 
     @Test
@@ -190,7 +190,7 @@ class AuthenticationServiceTest {
 
         authenticationService.forgotPassword(new ForgotPasswordRequest("test@gmail.com", "url"));
 
-        verifyNoInteractions(passwordResetProducer);
+        verifyNoInteractions(passwordResetProducerService);
     }
 
     @Test
@@ -201,11 +201,11 @@ class AuthenticationServiceTest {
         authenticationService.forgotPassword(
                 new ForgotPasswordRequest("test@gmail.com", "bad-url"));
 
-        verifyNoInteractions(passwordResetProducer);
+        verifyNoInteractions(passwordResetProducerService);
     }
 
     @Test
-    void shouldUpdatePasswordAndStorePasswordIdWhenResetSuccessful() throws Exception {
+    void shouldUpdatePasswordAndStorePasswordIdWhenResetSuccessful() {
         when(jwtService.isTokenValid("token", TokenType.RESET_PASSWORD)).thenReturn(true);
         when(jwtService.extractSubject("token")).thenReturn("email");
         when(passwordEncoder.encode("newPass")).thenReturn("encoded");
@@ -232,16 +232,7 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenPasswordIsEmpty() {
-        when(jwtService.isTokenValid(any(), any())).thenReturn(true);
-
-        assertThrows(
-                Exception.class,
-                () -> authenticationService.resetPassword("token", new ResetPasswordRequest("")));
-    }
-
-    @Test
-    void shouldReturnFalseWhenUserNotFoundDuringReset() throws Exception {
+    void shouldReturnFalseWhenUserNotFoundDuringReset() {
         when(jwtService.isTokenValid(any(), any())).thenReturn(true);
         when(jwtService.extractSubject(any())).thenReturn("email");
         when(userRepository.findByEmail("email")).thenReturn(Optional.empty());
@@ -256,9 +247,8 @@ class AuthenticationServiceTest {
     void shouldDeleteUserAndRemovePasswordIdWhenUserExists() {
         when(userRepository.deleteByEmail("email")).thenReturn(1L);
 
-        long result = authenticationService.deleteAccount("email");
+        assertDoesNotThrow(() -> authenticationService.deleteAccount("email"));
 
-        assertEquals(1, result);
         verify(redisPIDService).removePasswordId("email");
     }
 
@@ -271,12 +261,12 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldReturnZeroAndNotTouchRedisWhenUserDoesNotExistOnDelete() {
+    void shouldThrowUserNotFoundExceptionWhenUserDoesNotExistOnDelete() {
         when(userRepository.deleteByEmail("email")).thenReturn(0L);
 
-        long result = authenticationService.deleteAccount("email");
+        assertThrows(
+                UserNotFoundException.class, () -> authenticationService.deleteAccount("email"));
 
-        assertEquals(0, result);
         verify(redisPIDService, never()).removePasswordId(any());
     }
 }

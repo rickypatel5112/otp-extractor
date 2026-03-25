@@ -3,6 +3,7 @@ package com.project.otp_extractor.services;
 import com.project.otp_extractor.config.FrontendConfig;
 import com.project.otp_extractor.dtos.*;
 import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
+import com.project.otp_extractor.exceptions.UserNotFoundException;
 import com.project.otp_extractor.user.User;
 import com.project.otp_extractor.user.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -28,7 +29,7 @@ public class AuthenticationService {
     private final RedisTokenService redisTokenService;
     private final RedisPIDService redisPIDService;
     private final FrontendConfig frontendConfig;
-    private final PasswordResetProducer passwordResetProducer;
+    private final PasswordResetProducerService passwordResetProducerService;
 
     public record TokenPair(String accessToken, String refreshToken) {}
 
@@ -130,22 +131,15 @@ public class AuthenticationService {
                             .frontEndUrl(frontEndUrl)
                             .build();
 
-            passwordResetProducer.sendMessage(forgotPasswordResponse);
+            passwordResetProducerService.sendMessage(forgotPasswordResponse);
         }
     }
 
     @Transactional
-    public boolean resetPassword(String token, ResetPasswordRequest resetPasswordRequest)
-            throws Exception {
+    public boolean resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
 
         if (!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD)) {
             throw new JwtException("Invalid token");
-        }
-
-        String password = resetPasswordRequest.password();
-
-        if (password == null || password.isEmpty()) {
-            throw new Exception("Password is null or empty");
         }
 
         String userEmail = jwtService.extractSubject(token);
@@ -155,7 +149,9 @@ public class AuthenticationService {
                         .findByEmail(userEmail)
                         .map(
                                 user -> {
-                                    user.setPassword(passwordEncoder.encode(password));
+                                    user.setPassword(
+                                            passwordEncoder.encode(
+                                                    resetPasswordRequest.password()));
                                     userRepository.save(user);
                                     return true;
                                 })
@@ -174,21 +170,21 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public long deleteAccount(String email) {
+    public void deleteAccount(String email) {
         long deletedCount = userRepository.deleteByEmail(email);
+
+        if (deletedCount == 0) {
+            throw new UserNotFoundException("No user found with email: " + email);
+        }
 
         // TODO: Also delete google's refresh and access tokens from redis
 
-        if (deletedCount > 0) {
-            try {
-                redisPIDService.removePasswordId(email);
-            } catch (Exception e) {
-                // Redis failed - rollback DB transaction
-                throw new RuntimeException(
-                        "Failed to remove password ID from Redis, rolling back DB delete", e);
-            }
+        try {
+            redisPIDService.removePasswordId(email);
+        } catch (Exception e) {
+            // Redis failed - rollback DB transaction
+            throw new RuntimeException(
+                    "Failed to remove password ID from Redis, rolling back DB delete", e);
         }
-
-        return deletedCount;
     }
 }

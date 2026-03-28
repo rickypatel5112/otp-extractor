@@ -1,17 +1,23 @@
 FROM maven:3.9.11-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 
+# parent + service pom
 COPY pom.xml .
-RUN mvn dependency:go-offline
+COPY extract-otp/pom.xml service/pom.xml
 
-COPY src ./src
-RUN mvn clean package -DskipTests
+# download deps
+RUN mvn -f service/pom.xml -B -q -DskipTests dependency:go-offline
 
-FROM eclipse-temurin:17-jdk-alpine
+# copy source
+COPY extract-otp/src service/src
 
+# build
+RUN mvn -f service/pom.xml clean package -DskipTests
+
+# runtime
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar extract-otp.jar
 
-EXPOSE 8081
+COPY --from=build /app/service/target/*.jar extract-otp.jar
 
 ENTRYPOINT ["java", "-jar", "extract-otp.jar"]

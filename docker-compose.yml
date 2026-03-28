@@ -69,7 +69,7 @@ services:
     container_name: auth-db
     image: postgres:alpine
     ports:
-#      - "${AUTH_POSTGRES_PORT}:5432"
+      #      - "${AUTH_POSTGRES_PORT}:5432"
       - "5432:5432"
     environment:
       POSTGRES_DB: ${AUTH_POSTGRES_DB?AUTH_POSTGRES_DB is required}
@@ -91,7 +91,7 @@ services:
     container_name: extract-otp-db
     image: postgres:alpine
     ports:
-#      - "${EXTRACT_OTP_POSTGRES_PORT}:5432"
+      #      - "${EXTRACT_OTP_POSTGRES_PORT}:5432"
       - "5433:5432"
     environment:
       POSTGRES_DB: ${EXTRACT_OTP_POSTGRES_DB?EXTRACT_OTP_POSTGRES_DB is required}

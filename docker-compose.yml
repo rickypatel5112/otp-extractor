@@ -90,8 +90,7 @@ services:
     container_name: extract-otp-db
     image: postgres:alpine
     ports:
-      #      - "${EXTRACT_OTP_POSTGRES_PORT}:5432"
-      - "5433:5432"
+      - "${EXTRACT_OTP_POSTGRES_PORT}:5432"
     environment:
       POSTGRES_DB: ${EXTRACT_OTP_POSTGRES_DB?EXTRACT_OTP_POSTGRES_DB is required}
       POSTGRES_USER: ${EXTRACT_OTP_POSTGRES_USER?EXTRACT_OTP_POSTGRES_USER is required}
@@ -115,8 +114,8 @@ services:
       - "${RABBITMQ_PORT}:5672"
       - "${RABBITMQ_MANAGEMENT_PORT}:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME?RABBITMQ_USERNAME is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD?RABBITMQ_PASSWORD is required}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s

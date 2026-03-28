@@ -69,8 +69,7 @@ services:
     container_name: auth-db
     image: postgres:alpine
     ports:
-      #      - "${AUTH_POSTGRES_PORT}:5432"
-      - "5432:5432"
+      - "${AUTH_POSTGRES_PORT}:5432"
     environment:
       POSTGRES_DB: ${AUTH_POSTGRES_DB?AUTH_POSTGRES_DB is required}
       POSTGRES_USER: ${AUTH_POSTGRES_USER?AUTH_POSTGRES_USER is required}

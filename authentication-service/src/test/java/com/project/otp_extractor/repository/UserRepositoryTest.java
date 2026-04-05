@@ -26,7 +26,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @TestPropertySource(properties = {"spring.jpa.hibernate.ddl-auto=create"})
 public class UserRepositoryTest {
 
-    @Container static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:alpine");
 
     @Autowired private UserRepository userRepository;
 

@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+
+  cache:
+    type: redis
+
+reset-password:
+  queue: reset-password-queue
+
+jwt:
+  secret-key: Mk41Z1BCVllLTzhIR3ZWbzd6SHhKT1FXSFpPM05lbkgxUWIwV0h1UXVmUg==

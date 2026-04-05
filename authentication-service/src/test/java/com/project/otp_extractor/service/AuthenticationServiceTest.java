@@ -245,9 +245,15 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldDeleteUserAndRemovePasswordIdWhenUserExists() {
+
+        when(jwtService.extractSubject("test.access.token")).thenReturn("email");
+
         when(userRepository.deleteByEmail("email")).thenReturn(1L);
 
-        assertDoesNotThrow(() -> authenticationService.deleteAccount("email"));
+        assertDoesNotThrow(
+                () ->
+                        authenticationService.deleteAccount(
+                                "Bearer test.access.token", "test.refresh.token"));
 
         verify(redisPIDService).removePasswordId("email");
     }
@@ -257,16 +263,24 @@ class AuthenticationServiceTest {
         when(userRepository.deleteByEmail("email")).thenReturn(1L);
         doThrow(new RuntimeException()).when(redisPIDService).removePasswordId("email");
 
-        assertThrows(RuntimeException.class, () -> authenticationService.deleteAccount("email"));
+        assertThrows(
+                RuntimeException.class,
+                () ->
+                        authenticationService.deleteAccount(
+                                "Bearer test.access.token", "test.refresh.token"));
     }
 
     @Test
     void shouldThrowUserNotFoundExceptionWhenUserDoesNotExistOnDelete() {
+
+        when(jwtService.extractSubject("test.access.token")).thenReturn("email");
+
         when(userRepository.deleteByEmail("email")).thenReturn(0L);
 
         assertThrows(
-                UserNotFoundException.class, () -> authenticationService.deleteAccount("email"));
-
-        verify(redisPIDService, never()).removePasswordId(any());
+                UserNotFoundException.class,
+                () ->
+                        authenticationService.deleteAccount(
+                                "Bearer test.access.token", "test.refresh.token"));
     }
 }

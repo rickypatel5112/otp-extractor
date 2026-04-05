@@ -39,7 +39,7 @@ public class SecurityConfig {
                         request -> {
                             request.requestMatchers(
                                             AUTH_BASE + "/register",
-                                            AUTH_BASE + "/authenticate",
+                                            AUTH_BASE + "/login",
                                             AUTH_BASE + "/refresh",
                                             AUTH_BASE + "/forgot-password",
                                             AUTH_BASE + "/reset-password",

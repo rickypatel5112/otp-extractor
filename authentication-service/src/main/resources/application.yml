@@ -14,7 +14,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${AUTH_JPA_DDL_AUTO}
-    show-sql: true
+    #    show-sql: true
     properties:
       hibernate:
         format_sql: true
@@ -23,16 +23,16 @@ spring:
 
   data:
     redis:
-      host: ${AUTH_REDIS_HOST}
-      port: ${AUTH_REDIS_PORT}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
   cache:
     type: redis
 
   rabbitmq:
-    host: ${NOTIFICATION_RABBITMQ_HOST}
-    port: ${NOTIFICATION_RABBITMQ_PORT}
-    username: ${NOTIFICATION_RABBITMQ_USERNAME}
-    password: ${NOTIFICATION_RABBITMQ_PASSWORD}
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
 
 front-end:
   urls:

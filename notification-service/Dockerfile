@@ -1,18 +1,23 @@
 FROM maven:3.9.11-eclipse-temurin-17-alpine AS build
-LABEL authors="ricky"
-
 WORKDIR /app
 
+# parent + service pom
 COPY pom.xml .
-COPY src ./src
+COPY notification-service/pom.xml service/pom.xml
 
-RUN mvn clean package -DskipTests
+# download deps
+RUN mvn -f service/pom.xml -B -q -DskipTests dependency:go-offline
 
-FROM eclipse-temurin:17-jdk-alpine
+# copy source
+COPY notification-service/src service/src
 
+# build
+RUN mvn -f service/pom.xml clean package -DskipTests
+
+# runtime
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar notification.jar
 
-EXPOSE 8082
+COPY --from=build /app/service/target/*.jar notification.jar
 
 ENTRYPOINT ["java", "-jar", "notification.jar"]

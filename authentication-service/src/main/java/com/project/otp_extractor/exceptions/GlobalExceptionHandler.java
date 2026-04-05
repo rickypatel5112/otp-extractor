@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.amqp.AmqpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
@@ -78,6 +79,12 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Missing Parameter",
                 "Required parameter '" + ex.getParameterName() + "' is missing");
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials() {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED, "Authentication failed", "Invalid email or password");
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)

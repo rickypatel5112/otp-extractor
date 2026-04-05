@@ -5,10 +5,10 @@ spring:
     name: notification-service
 
   rabbitmq:
-    host: ${NOTIFICATION_RABBITMQ_HOST}
-    port: ${NOTIFICATION_RABBITMQ_PORT}
-    username: ${NOTIFICATION_RABBITMQ_USERNAME}
-    password: ${NOTIFICATION_RABBITMQ_PASSWORD}
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
 
   mail:
     host: ${SPRING_MAIL_HOST}

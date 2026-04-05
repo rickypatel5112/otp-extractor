@@ -6,8 +6,8 @@ spring:
 
   data:
     redis:
-      port: ${EXTRACT_OTP_REDIS_PORT}
-      host: ${EXTRACT_OTP_REDIS_HOST}
+      port: ${REDIS_PORT}
+      host: ${REDIS_HOST}
 
   datasource:
     url: jdbc:postgresql://${EXTRACT_OTP_DB_HOST}:${EXTRACT_OTP_DB_PORT}/${EXTRACT_OTP_DB}
@@ -26,10 +26,10 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   rabbitmq:
-    host: ${EXTRACT_OTP_RABBITMQ_HOST}
-    port: ${EXTRACT_OTP_RABBITMQ_PORT}
-    username: ${EXTRACT_OTP_RABBITMQ_USERNAME}
-    password: ${EXTRACT_OTP_RABBITMQ_PASSWORD}
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
 
 server:
   port: ${EXTRACT_OTP_SERVICE_PORT}

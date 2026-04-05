@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: auth-db
+      POSTGRES_USER: guest
+      POSTGRES_PASSWORD: guest
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+#  docker-compose -f docker-compose-local.yml up -d
+#  docker-compose -f docker-compose-local.yml up --build -d
+#  docker-compose -f docker-compose-local.yml down

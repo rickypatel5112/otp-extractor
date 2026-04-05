@@ -101,11 +101,10 @@ public class AuthenticationService {
         return new TokenPair(newAccessToken, refreshToken);
     }
 
-    public void logout(String authorizationHeader, String refreshToken) {
+    public void logout(String accessToken, String refreshToken) {
 
-        String accessToken = null;
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            accessToken = authorizationHeader.substring(7);
+        if (accessToken != null && accessToken.startsWith("Bearer ")) {
+            accessToken = accessToken.substring(7);
         }
 
         // TODO: Check if accessToken and refreshToken are not null & are valid
@@ -170,21 +169,28 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public void deleteAccount(String email) {
-        long deletedCount = userRepository.deleteByEmail(email);
+    public void deleteAccount(String authorizationHeader, String refreshToken) {
 
-        if (deletedCount == 0) {
-            throw new UserNotFoundException("No user found with email: " + email);
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid Authorization header");
         }
 
-        // TODO: Also delete google's refresh and access tokens from redis
+        String accessToken = authorizationHeader.substring(7);
+        String tokenEmail = jwtService.extractSubject(accessToken);
 
         try {
-            redisPIDService.removePasswordId(email);
+            redisPIDService.removePasswordId(tokenEmail);
+            jwtService.revokeToken(accessToken);
+            jwtService.revokeToken(refreshToken);
+            // Also delete user's google tokens
         } catch (Exception e) {
-            // Redis failed - rollback DB transaction
-            throw new RuntimeException(
-                    "Failed to remove password ID from Redis, rolling back DB delete", e);
+            throw new RuntimeException("Failed to remove Redis data", e);
+        }
+
+        long deletedCount = userRepository.deleteByEmail(tokenEmail);
+
+        if (deletedCount == 0) {
+            throw new UserNotFoundException("No user found with email: " + tokenEmail);
         }
     }
 }

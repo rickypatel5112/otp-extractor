@@ -23,7 +23,7 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully!");
     }
 
-    @PostMapping("/authenticate")
+    @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(
             @Valid @RequestBody AuthenticationRequest request) {
         var tokenPair = authenticationService.authenticate(request);
@@ -60,10 +60,10 @@ public class AuthenticationController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(
-            @CookieValue(value = "refreshToken") String refreshToken,
-            @RequestHeader(value = "Authorization") String authorizationHeader) {
+            @CookieValue("refreshToken") String refreshToken,
+            @RequestHeader("Authorization") String accessToken) {
 
-        authenticationService.logout(authorizationHeader, refreshToken);
+        authenticationService.logout(accessToken, refreshToken);
 
         ResponseCookie cookie =
                 ResponseCookie.from("refreshToken", "")
@@ -99,9 +99,23 @@ public class AuthenticationController {
                 .body("Password reset failed. Please try again.");
     }
 
-    @DeleteMapping("/delete-account")
-    public ResponseEntity<String> deleteAccount(@Valid @RequestBody DeleteAccountRequest request) {
-        authenticationService.deleteAccount(request.email());
-        return ResponseEntity.ok("Account deleted successfully!");
+    @DeleteMapping("/delete-account/me")
+    public ResponseEntity<String> deleteAccount(
+            @CookieValue(value = "refreshToken") String refreshToken,
+            @RequestHeader(value = "Authorization") String authorizationHeader) {
+
+        authenticationService.deleteAccount(authorizationHeader, refreshToken);
+
+        ResponseCookie cookie =
+                ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .secure(true)
+                        .path(cookiePath)
+                        .maxAge(0)
+                        .build();
+
+        return ResponseEntity.ok()
+                .header("Set-Cookie", cookie.toString())
+                .body("Account deleted successfully!");
     }
 }

@@ -2,6 +2,7 @@ package com.project.otp_extractor.config;
 
 import com.project.otp_extractor.dtos.TokenType;
 import com.project.otp_extractor.services.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,20 +38,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String jwt = authHeader.substring(7);
-        final String userEmail = jwtService.extractSubject(jwt);
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            /*
-            TODO: Should we pass userDetails as Principal in Authentication? or just email works fine?
-             For now we will go with email to avoid DB hits, in future if needed we can cache the User
-            */
-            // UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+        try {
+            String userEmail = jwtService.extractSubject(jwt);
 
             if (jwtService.isTokenValid(jwt, TokenType.ACCESS)) {
-                UsernamePasswordAuthenticationToken authenticationToken =
+                UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userEmail, null, null);
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
+
+        } catch (JwtException | IllegalArgumentException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter()
+                    .write(
+                            """
+        {"error": "Invalid or malformed JWT"}
+    """);
         }
         filterChain.doFilter(request, response);
     }

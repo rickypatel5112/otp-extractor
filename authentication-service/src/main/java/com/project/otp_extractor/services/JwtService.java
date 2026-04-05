@@ -4,13 +4,9 @@ import static com.project.otp_extractor.services.RedisTokenService.TOKEN_PREFIX;
 
 import com.project.otp_extractor.dtos.JwtTokenMetadata;
 import com.project.otp_extractor.dtos.TokenType;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -119,12 +116,12 @@ public class JwtService {
         extraClaims.put("type", tokenType.name());
 
         return Jwts.builder()
-                .setClaims(extraClaims)
-                .setId(UUID.randomUUID().toString())
-                .setSubject(subject)
-                .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .claims(extraClaims)
+                .id(UUID.randomUUID().toString())
+                .subject(subject)
+                .issuedAt(Date.from(Instant.now()))
+                .expiration(new Date(System.currentTimeMillis() + expirationMillis))
+                .signWith(getSignInKey())
                 .compact();
     }
 
@@ -183,14 +180,10 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String jwt) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(jwt)
-                .getBody();
+        return Jwts.parser().verifyWith(getSignInKey()).build().parseSignedClaims(jwt).getPayload();
     }
 
-    private Key getSignInKey() {
+    private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }

@@ -13,6 +13,7 @@ import com.project.otp_extractor.exceptions.UserAlreadyExistsException;
 import com.project.otp_extractor.exceptions.UserNotFoundException;
 import com.project.otp_extractor.services.AuthenticationService;
 import com.project.otp_extractor.services.JwtService;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,13 +40,21 @@ class AuthenticationControllerTest {
 
     @Autowired private ObjectMapper objectMapper;
 
+    private final String registerPath = "/api/v1/auth/register";
+    private final String loginPath = "/api/v1/auth/login";
+    private final String refreshPath = "/api/v1/auth/refresh";
+    private final String logoutPath = "/api/v1/auth/logout";
+    private final String deletePath = "/api/v1/auth/delete-account/me";
+    private final String forgotPasswordPath = "/api/v1/auth/forgot-password";
+    private final String resetPasswordPath = "/api/v1/auth/reset-password";
+
     @Test
     void shouldRegisterUserSuccessfully() throws Exception {
         RegisterRequest request =
                 new RegisterRequest("firstName", "lastName", "test@gmail.com", "@1Password");
 
         mockMvc.perform(
-                        post("/api/v1/auth/register")
+                        post(registerPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -64,7 +73,7 @@ class AuthenticationControllerTest {
                 .register(any());
 
         mockMvc.perform(
-                        post("/api/v1/auth/register")
+                        post(registerPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict());
@@ -75,7 +84,7 @@ class AuthenticationControllerTest {
         RegisterRequest request = new RegisterRequest("", "", "not-an-email", "weak");
 
         mockMvc.perform(
-                        post("/api/v1/auth/register")
+                        post(registerPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -90,7 +99,7 @@ class AuthenticationControllerTest {
         when(authenticationService.authenticate(any())).thenReturn(tokenPair);
 
         mockMvc.perform(
-                        post("/api/v1/auth/authenticate")
+                        post(loginPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -103,7 +112,7 @@ class AuthenticationControllerTest {
         AuthenticationRequest request = new AuthenticationRequest("", "");
 
         mockMvc.perform(
-                        post("/api/v1/auth/authenticate")
+                        post(loginPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -117,7 +126,7 @@ class AuthenticationControllerTest {
         when(authenticationService.issueNewNonExpiredToken("refresh-token")).thenReturn(tokenPair);
 
         mockMvc.perform(
-                        post("/api/v1/auth/refresh")
+                        post(refreshPath)
                                 .cookie(
                                         new jakarta.servlet.http.Cookie(
                                                 "refreshToken", "refresh-token")))
@@ -128,7 +137,7 @@ class AuthenticationControllerTest {
 
     @Test
     void shouldReturn400WhenRefreshTokenCookieIsMissing() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/refresh")).andExpect(status().isBadRequest());
+        mockMvc.perform(post(refreshPath)).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -137,7 +146,7 @@ class AuthenticationControllerTest {
                 .thenThrow(new io.jsonwebtoken.JwtException("expired"));
 
         mockMvc.perform(
-                        post("/api/v1/auth/refresh")
+                        post(refreshPath)
                                 .cookie(
                                         new jakarta.servlet.http.Cookie(
                                                 "refreshToken", "expired-token")))
@@ -147,7 +156,7 @@ class AuthenticationControllerTest {
     @Test
     void shouldLogoutSuccessfullyAndClearCookie() throws Exception {
         mockMvc.perform(
-                        post("/api/v1/auth/logout")
+                        post(logoutPath)
                                 .cookie(
                                         new jakarta.servlet.http.Cookie(
                                                 "refreshToken", "refresh-token"))
@@ -164,14 +173,14 @@ class AuthenticationControllerTest {
 
     @Test
     void shouldReturn400WhenLogoutRefreshTokenCookieIsMissing() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/logout").header("Authorization", "Bearer access-token"))
+        mockMvc.perform(post(logoutPath).header("Authorization", "Bearer access-token"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturn400WhenLogoutAuthorizationHeaderIsMissing() throws Exception {
         mockMvc.perform(
-                        post("/api/v1/auth/logout")
+                        post(logoutPath)
                                 .cookie(
                                         new jakarta.servlet.http.Cookie(
                                                 "refreshToken", "refresh-token")))
@@ -183,7 +192,7 @@ class AuthenticationControllerTest {
         ForgotPasswordRequest request = new ForgotPasswordRequest("user@gmail.com", "frontend-url");
 
         mockMvc.perform(
-                        post("/api/v1/auth/forgot-password")
+                        post(forgotPasswordPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -203,7 +212,7 @@ class AuthenticationControllerTest {
                 .forgotPassword(any());
 
         mockMvc.perform(
-                        post("/api/v1/auth/forgot-password")
+                        post(forgotPasswordPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError());
@@ -216,7 +225,7 @@ class AuthenticationControllerTest {
         when(authenticationService.resetPassword(any(), any())).thenReturn(true);
 
         mockMvc.perform(
-                        post("/api/v1/auth/reset-password")
+                        post(resetPasswordPath)
                                 .param("token", "valid-token")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -231,7 +240,7 @@ class AuthenticationControllerTest {
         when(authenticationService.resetPassword(any(), any())).thenReturn(false);
 
         mockMvc.perform(
-                        post("/api/v1/auth/reset-password")
+                        post(resetPasswordPath)
                                 .param("token", "valid-token")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -246,7 +255,7 @@ class AuthenticationControllerTest {
                 .thenThrow(new io.jsonwebtoken.JwtException("invalid"));
 
         mockMvc.perform(
-                        post("/api/v1/auth/reset-password")
+                        post(resetPasswordPath)
                                 .param("token", "bad-token")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -261,7 +270,7 @@ class AuthenticationControllerTest {
                 .thenThrow(new RuntimeException("unexpected"));
 
         mockMvc.perform(
-                        post("/api/v1/auth/reset-password")
+                        post(resetPasswordPath)
                                 .param("token", "valid-token")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -273,7 +282,7 @@ class AuthenticationControllerTest {
         ResetPasswordRequest request = new ResetPasswordRequest("@1newPassword");
 
         mockMvc.perform(
-                        post("/api/v1/auth/reset-password")
+                        post(resetPasswordPath)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -281,30 +290,30 @@ class AuthenticationControllerTest {
 
     @Test
     void shouldDeleteAccountSuccessfully() throws Exception {
-        DeleteAccountRequest request = new DeleteAccountRequest("user@gmail.com");
+
+        String accessToken = "access.token.test";
+        String refreshToken = "refresh.token.test";
+        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
 
         mockMvc.perform(
-                        delete("/api/v1/auth/delete-account")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                        delete(deletePath)
+                                .header("Authorization", "Bearer " + accessToken)
+                                .cookie(refreshCookie))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Account deleted successfully!"));
-
-        Mockito.verify(authenticationService).deleteAccount("user@gmail.com");
     }
 
     @Test
     void shouldReturnNotFoundWhenUserDoesNotExist() throws Exception {
-        DeleteAccountRequest request = new DeleteAccountRequest("user@gmail.com");
 
         doThrow(new UserNotFoundException("No user found with email: user@gmail.com"))
                 .when(authenticationService)
-                .deleteAccount("user@gmail.com");
+                .deleteAccount("Bearer access.token.test", "refresh.token.test");
 
         mockMvc.perform(
-                        delete("/api/v1/auth/delete-account")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                        delete(deletePath)
+                                .header("Authorization", "Bearer access.token.test")
+                                .cookie(new Cookie("refreshToken", "refresh.token.test")))
                 .andExpect(status().isNotFound());
     }
 }

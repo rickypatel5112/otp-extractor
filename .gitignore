@@ -93,3 +93,5 @@ failsafe-reports/
 # Misc
 ############################
 HELP.md
+
+*/*.pem

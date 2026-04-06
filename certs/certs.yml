@@ -1,0 +1,29 @@
+tls:
+  certificates:
+    - certFile: /certs/cert.pem
+      keyFile: /certs/key.pem
+
+http:
+  middlewares:
+    cors:
+      headers:
+        accessControlAllowOriginList:
+          - "https://localhost:5173"
+          - "https://localhost:5174"
+          - "http://localhost:5173"
+          - "http://localhost:5174"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "Accept"
+          - "Origin"
+          - "X-Requested-With"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 100
+        addVaryHeader: true

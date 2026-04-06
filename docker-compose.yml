@@ -1,11 +1,35 @@
 services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true" # Dashboard on :8080
+      - "--providers.docker=true" # Read container labels
+      - "--providers.file.filename=/certs/certs.yml"
+      - "--entrypoints.web.address=:80" # HTTP
+      - "--entrypoints.websecure.address=:443" # HTTPS
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Traefik dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./certs:/certs:ro"
+    profiles: ["all"]
+
+  # -------- Authentication Service --------
   authentication:
     container_name: authentication-service
     build:
       context: .
       dockerfile: authentication-service/Dockerfile
-    ports:
-      - "${AUTH_SERVICE_PORT}:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls=true"
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+      - "traefik.http.routers.auth.middlewares=cors@file"
     depends_on:
       redis:
         condition: service_healthy
@@ -18,13 +42,18 @@ services:
       - .env
     profiles: ["authentication", "all"]
 
+  # -------- Notification Service --------
   notification:
     container_name: notification-service
     build:
       context: .
       dockerfile: notification-service/Dockerfile
-    ports:
-      - "${NOTIFICATION_SERVICE_PORT}:8081"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notify.rule=Host(`notify.localhost`)"
+      - "traefik.http.routers.notify.entrypoints=websecure"
+      - "traefik.http.routers.notify.tls=true"
+      - "traefik.http.services.notify.loadbalancer.server.port=8081"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -33,13 +62,18 @@ services:
       - .env
     profiles: ["notification", "all"]
 
+  # -------- Extract OTP Service --------
   extract-otp:
     container_name: extract-otp-service
     build:
       context: .
       dockerfile: extract-otp/Dockerfile
-    ports:
-      - "${EXTRACT_OTP_SERVICE}:8082"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.extract.rule=Host(`extract.localhost`)"
+      - "traefik.http.routers.extract.entrypoints=websecure"
+      - "traefik.http.routers.extract.tls=true"
+      - "traefik.http.services.extract.loadbalancer.server.port=8082"
     depends_on:
       redis:
         condition: service_healthy
@@ -51,11 +85,10 @@ services:
       - extract-otp/.env
     profiles: ["extract-otp", "all"]
 
+  # -------- Redis --------
   redis:
     container_name: redis
     image: redis:alpine
-    ports:
-      - "${REDIS_PORT}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -65,11 +98,10 @@ services:
       - .env
     profiles: ["authentication", "extract-otp", "all"]
 
+  # -------- Auth DB --------
   auth-db:
     container_name: auth-db
     image: postgres:alpine
-    ports:
-      - "${AUTH_POSTGRES_PORT}:5432"
     environment:
       POSTGRES_DB: ${AUTH_POSTGRES_DB?AUTH_POSTGRES_DB is required}
       POSTGRES_USER: ${AUTH_POSTGRES_USER?AUTH_POSTGRES_USER is required}
@@ -86,11 +118,10 @@ services:
       start_period: 10s
     profiles: ["authentication", "all"]
 
+  # -------- Extract OTP DB --------
   extract-otp-db:
     container_name: extract-otp-db
     image: postgres:alpine
-    ports:
-      - "${EXTRACT_OTP_POSTGRES_PORT}:5432"
     environment:
       POSTGRES_DB: ${EXTRACT_OTP_POSTGRES_DB?EXTRACT_OTP_POSTGRES_DB is required}
       POSTGRES_USER: ${EXTRACT_OTP_POSTGRES_USER?EXTRACT_OTP_POSTGRES_USER is required}
@@ -107,12 +138,10 @@ services:
       start_period: 10s
     profiles: ["extract-otp", "all"]
 
+  # -------- RabbitMQ --------
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:4.2.0-management-alpine
-    ports:
-      - "${RABBITMQ_PORT}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME?RABBITMQ_USERNAME is required}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD?RABBITMQ_PASSWORD is required}

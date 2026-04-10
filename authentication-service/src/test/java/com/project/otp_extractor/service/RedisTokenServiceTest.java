@@ -53,7 +53,7 @@ class RedisTokenServiceTest {
 
         verify(valueOperations)
                 .set(
-                        eq("token:" + jti),
+                        eq("refresh-token:jti:" + jti),
                         metadataCaptor.capture(),
                         anyLong(),
                         eq(TimeUnit.MILLISECONDS));
@@ -82,7 +82,7 @@ class RedisTokenServiceTest {
 
         verify(valueOperations)
                 .set(
-                        eq("token:" + jti),
+                        eq("refresh-token:jti:" + jti),
                         metadataCaptor.capture(),
                         anyLong(),
                         eq(TimeUnit.MILLISECONDS));

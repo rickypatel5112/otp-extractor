@@ -3,11 +3,13 @@ package com.otp_extractor.notification_service.services;
 import com.otp_extractor.notification_service.dtos.ResetRequestResponse;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PasswordResetConsumer {
 
     private final EmailSenderService emailSenderService;
@@ -17,7 +19,9 @@ public class PasswordResetConsumer {
         final String to = resetRequestResponse.getEmail();
         final String token = resetRequestResponse.getResetToken();
         final String frontEndUrl = resetRequestResponse.getFrontEndUrl();
-        final String appName = "OTP Extractor"; // or inject via @Value("${app.name}")
+        final String appName = "OTP Extractor";
+
+        log.info("Password reset email consumed from queue for email: {}", to);
 
         String body =
                 """
@@ -29,7 +33,7 @@ public class PasswordResetConsumer {
                       <p>Hello,</p>
                       <p>We received a request to reset the password for your account. If you made this request, please click the button below to reset your password:</p>
                       <p style="text-align: center;">
-                        <a href="%s/reset-password?token=%s"
+                        <a href="%s?token=%s"
                            style="background-color: #2a4d8f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                           Reset Password
                         </a>
@@ -44,6 +48,12 @@ public class PasswordResetConsumer {
                 """
                         .formatted(frontEndUrl, token, appName);
 
-        emailSenderService.sendEmail(to, body);
+        try {
+            emailSenderService.sendEmail(to, body);
+            log.info("Password reset email dispatched successfully for email: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to dispatch password reset email for email: {}", to, e);
+            throw e;
+        }
     }
 }

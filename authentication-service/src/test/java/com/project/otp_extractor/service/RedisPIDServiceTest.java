@@ -14,7 +14,7 @@ import org.springframework.data.redis.core.ValueOperations;
 
 @ExtendWith(MockitoExtension.class)
 class RedisPIDServiceTest {
-    private static final String PREFIX = "pid:";
+    private static final String REDIS_ACCESS_TOKEN_PID_PREFIX = "access-token:pid:";
 
     @Mock private StringRedisTemplate stringRedisTemplate;
 
@@ -33,7 +33,7 @@ class RedisPIDServiceTest {
 
         redisPIDService.addPasswordId(email);
 
-        verify(valueOperations).set(startsWith(PREFIX + email), anyString());
+        verify(valueOperations).set(startsWith(REDIS_ACCESS_TOKEN_PID_PREFIX + email), anyString());
     }
 
     @Test
@@ -45,7 +45,8 @@ class RedisPIDServiceTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
 
-        verify(valueOperations, times(2)).set(eq(PREFIX + email), captor.capture());
+        verify(valueOperations, times(2))
+                .set(eq(REDIS_ACCESS_TOKEN_PID_PREFIX + email), captor.capture());
 
         String first = captor.getAllValues().get(0);
         String second = captor.getAllValues().get(1);
@@ -60,7 +61,7 @@ class RedisPIDServiceTest {
         String email = "user@gmail.com";
         String expectedPid = "pid123";
 
-        when(valueOperations.get(PREFIX + email)).thenReturn(expectedPid);
+        when(valueOperations.get(REDIS_ACCESS_TOKEN_PID_PREFIX + email)).thenReturn(expectedPid);
 
         String result = redisPIDService.getPasswordId(email);
 
@@ -71,7 +72,7 @@ class RedisPIDServiceTest {
     void shouldReturnNullWhenPasswordIdDoesNotExist() {
         String email = "user@gmail.com";
 
-        when(valueOperations.get(PREFIX + email)).thenReturn(null);
+        when(valueOperations.get(REDIS_ACCESS_TOKEN_PID_PREFIX + email)).thenReturn(null);
 
         String result = redisPIDService.getPasswordId(email);
 
@@ -82,11 +83,11 @@ class RedisPIDServiceTest {
     void shouldDeletePasswordIdWithCorrectKey() {
         String email = "user@gmail.com";
 
-        when(stringRedisTemplate.delete(PREFIX + email)).thenReturn(true);
+        when(stringRedisTemplate.delete(REDIS_ACCESS_TOKEN_PID_PREFIX + email)).thenReturn(true);
 
         boolean isPasswordIdRemoved = redisPIDService.removePasswordId(email);
 
-        verify(stringRedisTemplate).delete(PREFIX + email);
+        verify(stringRedisTemplate).delete(REDIS_ACCESS_TOKEN_PID_PREFIX + email);
         assertTrue(isPasswordIdRemoved);
     }
 
@@ -102,7 +103,7 @@ class RedisPIDServiceTest {
 
     @Test
     void shouldHandleNullEmailGracefullyWhenGettingPasswordId() {
-        when(valueOperations.get(PREFIX + null)).thenReturn(null);
+        when(valueOperations.get(REDIS_ACCESS_TOKEN_PID_PREFIX + null)).thenReturn(null);
 
         String result = redisPIDService.getPasswordId(null);
 
@@ -121,7 +122,8 @@ class RedisPIDServiceTest {
 
     @Test
     void getPasswordIdReturnsNullForMissingKey() {
-        when(valueOperations.get("pid:missing@example.com")).thenReturn(null);
+        when(valueOperations.get(REDIS_ACCESS_TOKEN_PID_PREFIX + "missing@example.com"))
+                .thenReturn(null);
 
         String pid = redisPIDService.getPasswordId("missing@example.com");
         assertNull(pid);
@@ -129,16 +131,19 @@ class RedisPIDServiceTest {
 
     @Test
     void removePasswordIdDoesNotFailForMissingKey() {
-        when(stringRedisTemplate.delete("pid:nonexistent@example.com")).thenReturn(false);
+        when(stringRedisTemplate.delete(REDIS_ACCESS_TOKEN_PID_PREFIX + "nonexistent@example.com"))
+                .thenReturn(false);
 
         assertDoesNotThrow(() -> redisPIDService.removePasswordId("nonexistent@example.com"));
 
-        verify(stringRedisTemplate).delete("pid:nonexistent@example.com");
+        verify(stringRedisTemplate)
+                .delete(REDIS_ACCESS_TOKEN_PID_PREFIX + "nonexistent@example.com");
     }
 
     @Test
     void shouldReturnFalseForNullValueInRemovePassword() {
-        when(stringRedisTemplate.delete("pid:test@gmail.com")).thenReturn(null);
+        when(stringRedisTemplate.delete(REDIS_ACCESS_TOKEN_PID_PREFIX + "test@gmail.com"))
+                .thenReturn(null);
 
         assertFalse(redisPIDService.removePasswordId("test@gmail.com"));
     }
@@ -151,7 +156,7 @@ class RedisPIDServiceTest {
                         invocation -> {
                             String key = invocation.getArgument(0);
                             String value = invocation.getArgument(1);
-                            assertEquals("pid:" + email, key);
+                            assertEquals(REDIS_ACCESS_TOKEN_PID_PREFIX + "" + email, key);
                             assertNotNull(value); // UUID generated
                             return null;
                         })
@@ -161,6 +166,7 @@ class RedisPIDServiceTest {
         redisPIDService.addPasswordId(email);
         redisPIDService.addPasswordId(email);
 
-        verify(valueOperations, times(2)).set(eq("pid:" + email), anyString());
+        verify(valueOperations, times(2))
+                .set(eq(REDIS_ACCESS_TOKEN_PID_PREFIX + "" + email), anyString());
     }
 }

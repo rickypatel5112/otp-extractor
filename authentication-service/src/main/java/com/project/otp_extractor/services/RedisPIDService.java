@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 public class RedisPIDService {
 
     private final StringRedisTemplate stringRedisTemplate;
-    static final String PWD_ID_PREFIX = "pid:";
+    static final String PWD_ID_PREFIX = "access-token:pid:";
 
     public void addPasswordId(String userEmail) {
 

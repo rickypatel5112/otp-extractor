@@ -1,5 +1,9 @@
 server:
   port: ${AUTH_SERVICE_PORT}
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
 
 spring:
   application:

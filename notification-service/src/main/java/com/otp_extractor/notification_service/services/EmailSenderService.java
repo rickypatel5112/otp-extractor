@@ -2,6 +2,7 @@ package com.otp_extractor.notification_service.services;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -9,6 +10,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class EmailSenderService {
 
     @Autowired private JavaMailSender mailSender;
@@ -17,6 +19,8 @@ public class EmailSenderService {
     private String fromEmail;
 
     public void sendEmail(String to, String htmlBody) throws MessagingException {
+        log.info("Sending email to: {}", to);
+
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper =
                 new MimeMessageHelper(
@@ -27,6 +31,12 @@ public class EmailSenderService {
         helper.setSubject("Request to Reset Password");
         helper.setText(htmlBody, true);
 
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+            log.info("Email sent successfully to: {}", to);
+        } catch (Exception e) {
+            log.error("Failed to send email to: {}", to, e);
+            throw e;
+        }
     }
 }

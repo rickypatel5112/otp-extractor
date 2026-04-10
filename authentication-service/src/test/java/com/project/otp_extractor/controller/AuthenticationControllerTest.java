@@ -58,7 +58,8 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(content().string("User registered successfully!"));
+                .andExpect(jsonPath("$.message").value("User registered successfully"));
+        ;
 
         Mockito.verify(authenticationService).register(any());
     }
@@ -104,7 +105,7 @@ class AuthenticationControllerTest {
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"))
-                .andExpect(jsonPath("$.accessToken").value("access-token"));
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"));
     }
 
     @Test
@@ -132,7 +133,7 @@ class AuthenticationControllerTest {
                                                 "refreshToken", "refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"))
-                .andExpect(jsonPath("$.accessToken").value("new-access"));
+                .andExpect(jsonPath("$.message").value("Token refreshed"));
     }
 
     @Test
@@ -166,7 +167,7 @@ class AuthenticationControllerTest {
                         header().string(
                                         "Set-Cookie",
                                         org.hamcrest.Matchers.containsString("Max-Age=0")))
-                .andExpect(content().string("Logged out successfully!"));
+                .andExpect(jsonPath("$.message").value("Logged out successfully"));
 
         Mockito.verify(authenticationService).logout("Bearer access-token", "refresh-token");
     }
@@ -230,7 +231,7 @@ class AuthenticationControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Password reset successful"));
+                .andExpect(jsonPath("$.message").value("Password reset successful"));
     }
 
     @Test
@@ -300,7 +301,7 @@ class AuthenticationControllerTest {
                                 .header("Authorization", "Bearer " + accessToken)
                                 .cookie(refreshCookie))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Account deleted successfully!"));
+                .andExpect(jsonPath("$.message").value("Account deleted successfully"));
     }
 
     @Test

@@ -26,7 +26,7 @@ import org.springframework.data.redis.core.ValueOperations;
 @ExtendWith(MockitoExtension.class)
 class JwtServiceTest {
 
-    private static final String TOKEN_PREFIX = "token:";
+    private static final String TOKEN_PREFIX = "refresh-token:jti:";
     private static final String SECRET =
             "c29tZS1zZWNyZXQta2V5LTI1Ni1iaXRzLWxvbmctajF3YTRkNmI4Y3NoOGVkOA==";
 

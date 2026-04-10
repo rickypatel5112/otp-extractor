@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class RedisTokenService {
     private final JwtService jwtService;
     private final RedisTemplate<String, JwtTokenMetadata> redisTemplate;
-    static final String TOKEN_PREFIX = "token:";
+    static final String TOKEN_PREFIX = "refresh-token:jti:";
 
     public void addRefreshToken(String token) {
         addToken(token, TokenType.REFRESH);

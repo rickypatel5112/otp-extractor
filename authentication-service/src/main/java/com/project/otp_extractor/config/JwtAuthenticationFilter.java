@@ -1,5 +1,7 @@
 package com.project.otp_extractor.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.otp_extractor.dtos.ApiResponse;
 import com.project.otp_extractor.dtos.TokenType;
 import com.project.otp_extractor.services.JwtService;
 import io.jsonwebtoken.JwtException;
@@ -9,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,8 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-
-    //    private final UserDetailsService userDetailsService;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -50,14 +52,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (JwtException | IllegalArgumentException e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter()
-                    .write(
-                            """
-        {"error": "Invalid or malformed JWT"}
-    """);
+            writeErrorResponse(response, "Invalid or malformed JWT");
+            return;
         }
+
         filterChain.doFilter(request, response);
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, String message)
+            throws IOException {
+        ApiResponse<Void> body = ApiResponse.error(401, message, null);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        objectMapper.writeValue(response.getOutputStream(), body);
     }
 }

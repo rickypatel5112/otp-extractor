@@ -107,7 +107,7 @@ public class JwtService {
         if (tokenType == TokenType.ACCESS) {
             expirationMillis = 1000 * 60 * 15; // 15 mins
         } else if (tokenType == TokenType.REFRESH) {
-            expirationMillis = 1000 * 60 * 30; // 7 days 1000 * 60 * 60 * 24 * 7
+            expirationMillis = 1000 * 60 * 60 * 24 * 7; // 7 days
         } else if (tokenType == TokenType.RESET_PASSWORD) {
             expirationMillis = 1000 * 60 * 10; // 10 mins
         }

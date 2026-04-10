@@ -103,7 +103,8 @@ class AuthenticationControllerIntegrationTest {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
 
         return new AuthTokens(
-                json.get("accessToken").asText(), result.getResponse().getCookie("refreshToken"));
+                json.get("data").get("accessToken").asText(),
+                result.getResponse().getCookie("refreshToken"));
     }
 
     private record AuthTokens(String accessToken, Cookie refreshTokenCookie) {}
@@ -124,7 +125,7 @@ class AuthenticationControllerIntegrationTest {
 
         mockMvc.perform(post("/api/v1/auth/refresh").cookie(tokens.refreshTokenCookie()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").exists());
+                .andExpect(jsonPath("$.data.accessToken").exists());
     }
 
     @Test
@@ -136,7 +137,7 @@ class AuthenticationControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + tokens.accessToken())
                                 .cookie(tokens.refreshTokenCookie()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Logged out successfully!"));
+                .andExpect(jsonPath("$.message").value("Logged out successfully"));
     }
 
     @Test
@@ -150,7 +151,7 @@ class AuthenticationControllerIntegrationTest {
                                 .header("Authorization", "Bearer " + tokens.accessToken())
                                 .cookie(tokens.refreshTokenCookie()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Account deleted successfully!"));
+                .andExpect(jsonPath("$.message").value("Account deleted successfully"));
 
         assertTrue(userRepository.findByEmail(email).isEmpty());
     }
@@ -309,7 +310,7 @@ class AuthenticationControllerIntegrationTest {
         mockMvc.perform(
                         delete("/api/v1/auth/delete-account/me")
                                 .header("Authorization", "Bearer invalid.token.here"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

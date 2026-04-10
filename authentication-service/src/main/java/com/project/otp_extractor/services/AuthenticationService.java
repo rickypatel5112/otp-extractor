@@ -10,6 +10,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationService {
 
     private final UserRepository userRepository;
@@ -35,8 +37,10 @@ public class AuthenticationService {
 
     @Transactional
     public void register(RegisterRequest request) throws UserAlreadyExistsException {
+        log.info("Registering new user with email: {}", request.getEmail());
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            log.warn("Registration failed — email already exists: {}", request.getEmail());
             throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
         }
 
@@ -50,58 +54,64 @@ public class AuthenticationService {
 
         try {
             userRepository.save(user);
+            log.info("User registered successfully: {}", request.getEmail());
         } catch (DataIntegrityViolationException e) {
+            log.warn(
+                    "Registration failed — data integrity violation for email: {}",
+                    request.getEmail());
             throw new UserAlreadyExistsException("Email already exists: " + request.getEmail());
         }
+
         redisPIDService.addPasswordId(request.getEmail());
+        log.debug("Password ID added to Redis for: {}", request.getEmail());
     }
 
     public TokenPair authenticate(AuthenticationRequest request) {
+        log.info("Authentication attempt for email: {}", request.getEmail());
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-        /**
-         * We don't need this, we can be sure that the user would exist for that token. TODO: The
-         * user when they delete their account, we'll revoke all their access and refresh tokens.
-         * This way it won't pass the revocation check
-         */
-        //        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-
         String subject = request.getEmail();
-
         var accessToken = jwtService.generateToken(subject, TokenType.ACCESS);
         var refreshToken = jwtService.generateToken(subject, TokenType.REFRESH);
 
         redisTokenService.addRefreshToken(refreshToken);
+        log.info("Authentication successful for email: {}", request.getEmail());
+
         return new TokenPair(accessToken, refreshToken);
     }
 
     public TokenPair issueNewNonExpiredToken(String refreshToken) {
+        log.debug("Token refresh requested");
 
-        // Check if refresh token is expired
         if (!jwtService.isTokenValid(refreshToken, TokenType.REFRESH)) {
+            log.warn("Token refresh failed — invalid refresh token");
             throw new JwtException("Invalid refresh token");
         }
 
         String subject = jwtService.extractSubject(refreshToken);
+        log.debug("Issuing new access token for subject: {}", subject);
 
-        // Generate new access token
         String newAccessToken = jwtService.generateToken(subject, TokenType.ACCESS);
 
-        // Determine if refresh token should be rotated
         Date expirationDate = jwtService.extractClaim(refreshToken, Claims::getExpiration);
         long fifteenMinutes = 15 * 60 * 1000;
         Date threshold = new Date(System.currentTimeMillis() + fifteenMinutes);
 
         if (expirationDate.before(threshold)) {
-            // Less than 15 minutes remaining → issue a new refresh token
+            log.debug(
+                    "Refresh token nearing expiry — rotating refresh token for subject: {}",
+                    subject);
             refreshToken = jwtService.generateToken(subject, TokenType.REFRESH);
         }
 
+        log.info("Token refresh successful for subject: {}", subject);
         return new TokenPair(newAccessToken, refreshToken);
     }
 
     public void logout(String accessToken, String refreshToken) {
+        log.info("Logout requested");
 
         if (accessToken != null && accessToken.startsWith("Bearer ")) {
             accessToken = accessToken.substring(7);
@@ -111,17 +121,23 @@ public class AuthenticationService {
         redisTokenService.addAccessToken(accessToken);
         jwtService.revokeToken(accessToken);
         jwtService.revokeToken(refreshToken);
+
+        log.info("Logout successful — tokens revoked");
     }
 
     public void forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        log.info("Forgot password requested for email: {}", request.getEmail());
 
         String email = request.getEmail();
         String frontEndUrl = request.getFrontEndUrl();
 
+        if (!frontendConfig.isUrlAllowed(frontEndUrl)) {
+            log.warn("Rejected forgot password request — disallowed frontend URL: {}", frontEndUrl);
+            return;
+        }
+
         if (userRepository.findByEmail(email).isPresent()) {
             String resetToken = jwtService.generateToken(email, TokenType.RESET_PASSWORD);
-
-            if (!frontendConfig.isUrlAllowed(frontEndUrl)) return;
 
             var forgotPasswordResponse =
                     ForgotPasswordResponse.builder()
@@ -131,17 +147,23 @@ public class AuthenticationService {
                             .build();
 
             passwordResetProducerService.sendMessage(forgotPasswordResponse);
+            log.info("Password reset message sent for email: {}", email);
+        } else {
+            log.debug("Forgot password requested for unknown email: {}", email);
         }
     }
 
     @Transactional
     public boolean resetPassword(String token, ResetPasswordRequest resetPasswordRequest) {
+        log.info("Password reset attempt");
 
         if (!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD)) {
+            log.warn("Password reset failed — invalid or expired token");
             throw new JwtException("Invalid token");
         }
 
         String userEmail = jwtService.extractSubject(token);
+        log.debug("Processing password reset for email: {}", userEmail);
 
         boolean isSuccess =
                 userRepository
@@ -157,12 +179,19 @@ public class AuthenticationService {
                         .orElse(false);
 
         if (isSuccess) {
+            log.info("Password updated successfully for email: {}", userEmail);
             try {
                 redisPIDService.addPasswordId(userEmail);
+                log.debug("Password ID rotated in Redis for: {}", userEmail);
             } catch (Exception e) {
-                // rollback DB change manually if Redis fails
+                log.error(
+                        "Redis operation failed during password reset for email: {} — rolling back",
+                        userEmail,
+                        e);
                 throw new RuntimeException("Redis operation failed, rolling back", e);
             }
+        } else {
+            log.warn("Password reset failed — user not found for email: {}", userEmail);
         }
 
         return isSuccess;
@@ -170,27 +199,37 @@ public class AuthenticationService {
 
     @Transactional
     public void deleteAccount(String authorizationHeader, String refreshToken) {
+        log.info("Account deletion requested");
 
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            log.warn("Account deletion failed — invalid Authorization header");
             throw new IllegalArgumentException("Invalid Authorization header");
         }
 
         String accessToken = authorizationHeader.substring(7);
         String tokenEmail = jwtService.extractSubject(accessToken);
+        log.debug("Processing account deletion for email: {}", tokenEmail);
 
         try {
             redisPIDService.removePasswordId(tokenEmail);
             jwtService.revokeToken(accessToken);
             jwtService.revokeToken(refreshToken);
-            // Also delete user's google tokens
+            log.debug("Redis data and tokens cleared for email: {}", tokenEmail);
         } catch (Exception e) {
+            log.error(
+                    "Failed to remove Redis data during account deletion for email: {}",
+                    tokenEmail,
+                    e);
             throw new RuntimeException("Failed to remove Redis data", e);
         }
 
         long deletedCount = userRepository.deleteByEmail(tokenEmail);
 
         if (deletedCount == 0) {
+            log.warn("Account deletion failed — no user found with email: {}", tokenEmail);
             throw new UserNotFoundException("No user found with email: " + tokenEmail);
         }
+
+        log.info("Account deleted successfully for email: {}", tokenEmail);
     }
 }

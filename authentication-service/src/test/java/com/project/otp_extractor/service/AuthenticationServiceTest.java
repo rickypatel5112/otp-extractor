@@ -186,6 +186,7 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldNotSendResetMessageWhenUserDoesNotExist() {
+        when(frontendConfig.isUrlAllowed("url")).thenReturn(true);
         when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.empty());
 
         authenticationService.forgotPassword(new ForgotPasswordRequest("test@gmail.com", "url"));
@@ -195,7 +196,6 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldNotSendResetMessageWhenUrlNotAllowed() {
-        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(new User()));
         when(frontendConfig.isUrlAllowed("bad-url")).thenReturn(false);
 
         authenticationService.forgotPassword(
@@ -260,7 +260,8 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldThrowExceptionWhenRedisFailsDuringDelete() {
-        when(userRepository.deleteByEmail("email")).thenReturn(1L);
+        when(jwtService.extractSubject("test.access.token")).thenReturn("email");
+
         doThrow(new RuntimeException()).when(redisPIDService).removePasswordId("email");
 
         assertThrows(

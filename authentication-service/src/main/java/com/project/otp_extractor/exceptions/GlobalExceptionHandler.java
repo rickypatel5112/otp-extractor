@@ -1,7 +1,7 @@
 package com.project.otp_extractor.exceptions;
 
+import com.project.otp_extractor.dtos.ApiResponse;
 import io.jsonwebtoken.JwtException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,106 +16,102 @@ import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@RequestMapping(produces = "application/json;charset=UTF-8")
 public class GlobalExceptionHandler {
 
-    private ResponseEntity<Map<String, Object>> buildResponse(
-            HttpStatus status, String error, Object message) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", status.value());
-        body.put("error", error);
-        body.put("messages", message);
-        body.put("timestamp", Instant.now().toString());
-        return new ResponseEntity<>(body, status);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(
+    public ResponseEntity<ApiResponse<Map<String, List<String>>>> handleValidationErrors(
             MethodArgumentNotValidException ex) {
 
         Map<String, List<String>> fieldErrors = new HashMap<>();
-
         ex.getBindingResult()
                 .getAllErrors()
                 .forEach(
                         error -> {
                             String fieldName =
-                                    (error instanceof FieldError fieldError)
-                                            ? fieldError.getField()
+                                    (error instanceof FieldError fe)
+                                            ? fe.getField()
                                             : error.getObjectName();
-
                             fieldErrors
-                                    .computeIfAbsent(fieldName, key -> new ArrayList<>())
+                                    .computeIfAbsent(fieldName, k -> new ArrayList<>())
                                     .add(error.getDefaultMessage());
                         });
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", fieldErrors);
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(400, "Validation failed", fieldErrors));
     }
 
     @ExceptionHandler(MissingRequestCookieException.class)
-    public ResponseEntity<Map<String, Object>> handleMissingCookie(
-            MissingRequestCookieException ex) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Missing Cookie",
-                "Required cookie '" + ex.getCookieName() + "' is missing");
+    public ResponseEntity<ApiResponse<Void>> handleMissingCookie(MissingRequestCookieException ex) {
+        return ResponseEntity.badRequest()
+                .body(
+                        ApiResponse.error(
+                                400,
+                                "Required cookie '" + ex.getCookieName() + "' is missing",
+                                null));
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<Map<String, Object>> handleMissingHeader(
-            MissingRequestHeaderException ex) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Missing Header",
-                "Required header '" + ex.getHeaderName() + "' is missing");
+    public ResponseEntity<ApiResponse<Void>> handleMissingHeader(MissingRequestHeaderException ex) {
+        return ResponseEntity.badRequest()
+                .body(
+                        ApiResponse.error(
+                                400,
+                                "Required header '" + ex.getHeaderName() + "' is missing",
+                                null));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<Map<String, Object>> handleMissingParam(
+    public ResponseEntity<ApiResponse<Void>> handleMissingParam(
             MissingServletRequestParameterException ex) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Missing Parameter",
-                "Required parameter '" + ex.getParameterName() + "' is missing");
+        return ResponseEntity.badRequest()
+                .body(
+                        ApiResponse.error(
+                                400,
+                                "Required parameter '" + ex.getParameterName() + "' is missing",
+                                null));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentials() {
-        return buildResponse(
-                HttpStatus.UNAUTHORIZED, "Authentication failed", "Invalid email or password");
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentials() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(401, "Invalid email or password", null));
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<Map<String, Object>> handleUserAlreadyExists(
+    public ResponseEntity<ApiResponse<Void>> handleUserAlreadyExists(
             UserAlreadyExistsException ex) {
-        return buildResponse(HttpStatus.CONFLICT, "User Already Exists", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(409, ex.getMessage(), null));
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
-        return buildResponse(HttpStatus.NOT_FOUND, "User Not Found", ex.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(404, ex.getMessage(), null));
     }
 
     @ExceptionHandler(JwtException.class)
-    public ResponseEntity<Map<String, Object>> handleJwtException(JwtException ex) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid or expired token");
+    public ResponseEntity<ApiResponse<Void>> handleJwtException() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(401, "Invalid or expired token", null));
     }
 
     @ExceptionHandler(AmqpException.class)
-    public ResponseEntity<Map<String, Object>> handleAmqpException(AmqpException ex) {
-        return buildResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Messaging Error",
-                "Internal messaging error. Please try again later.");
+    public ResponseEntity<ApiResponse<Void>> handleAmqpException() {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        ApiResponse.error(
+                                500, "Internal messaging error. Please try again later.", null));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
-        return buildResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Internal Server Error",
-                "An unexpected error occurred");
+    public ResponseEntity<ApiResponse<Void>> handleUnexpected() {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error(500, "An unexpected error occurred", null));
     }
 }
